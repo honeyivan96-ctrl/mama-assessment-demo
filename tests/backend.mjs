@@ -1,0 +1,40 @@
+import ts from 'typescript';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+import assert from 'node:assert/strict';
+const compileRoot='.local/test-modules';
+for(const file of ['supabase/functions/_shared/questions.ts','supabase/functions/_shared/report.ts','supabase/functions/_shared/backend.ts','src/lib/demo-api.ts']){
+ const source=await fs.readFile(file,'utf8');let text=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+ text=text.replace(/from (["'])(\.[^"']+)\1/g,(_,quote,name)=>'from '+quote+(name.endsWith('.ts')?name.slice(0,-3)+'.js':name+'.js')+quote);
+ const dest=path.join(compileRoot,file.replace(/\.ts$/,'.js'));await fs.mkdir(path.dirname(dest),{recursive:true});await fs.writeFile(dest,text);
+}
+async function load(file){return import(pathToFileURL(path.resolve(compileRoot,file.replace(/\.ts$/,'.js'))).href);}
+const {makeHandler}=await load('supabase/functions/_shared/backend.ts');
+const {buildReport}=await load('supabase/functions/_shared/report.ts');
+const {demoApi}=await load('src/lib/demo-api.ts');
+const vectors={elephant:[2,0,2,2,2,0,1,1,1,0,0,2,2,0,3,0],tiger:[0,3,3,0,1,3,0,3,2,3,3,1,0,2,1,2],hen:[3,0,0,2,0,2,3,0,0,1,2,0,1,0,0,0],cat:[3,3,0,0,0,1,3,3,0,3,3,3,1,2,0,2]};
+for(const [type,answers] of Object.entries(vectors))assert.equal(buildReport(answers).animal,type);
+assert.throws(()=>buildReport([0]),/16/);assert.throws(()=>buildReport(Array(16).fill(4)),/16/);
+const tables=new Map(),rpcCalls=[];
+const store={async query(table,params,method='GET',value,prefer){const all=tables.get(table)||[];if(method==='POST'){tables.set(table,[...all,...(Array.isArray(value)?value:[value])]);return {rows:[],total:0};}let rows=all.filter(row=>Object.entries(params).every(([key,v])=>{if(v.startsWith('eq.'))return String(row[key])===v.slice(3);if(v.startsWith('gt.'))return row[key]>Number(v.slice(3));return true;}));const total=rows.length;if(params.select)rows=rows.map(row=>Object.fromEntries(params.select.split(',').map(key=>[key,row[key]])));return {rows:rows.slice(Number(params.offset)||0,(Number(params.offset)||0)+(Number(params.limit)||rows.length)),total};},async rpc(name,value){rpcCalls.push({name,value});if(name==='mama_rate')return 1;return {id:value.p_result_id,remaining:2};}};
+const origin='https://mama-production.example',env={SUPABASE_URL:'https://example.supabase.co',SUPABASE_SERVICE_ROLE_KEY:'test-only',APP_SECRET:'a'.repeat(64),ADMIN_PASSWORD:'test-admin-password-long',ALLOWED_ORIGINS:origin};
+const handler=makeHandler(env,store);
+const req=async(path,data,headers={},method=data===undefined?'GET':'POST')=>{const r=await handler(new Request('https://example.supabase.co/functions/v1/mama-api/'+path,{method,headers:{Origin:origin,...(data===undefined?{}:{'Content-Type':'application/json'}),...headers},body:data===undefined?undefined:JSON.stringify(data)}));const text=await r.text();return {status:r.status,data:text?JSON.parse(text):null,headers:r.headers};};
+assert.equal((await req('config')).status,200);
+assert.equal((await req('config',undefined,{Origin:'https://foreign.example'})).status,403);
+const options=await req('auth',undefined,{},'OPTIONS');assert.equal(options.status,204);assert.equal(options.headers.get('access-control-allow-origin'),origin);
+assert.equal((await req('session')).status,401);
+assert.equal((await req('admin/login',{password:'wrong'})).status,401);
+assert.equal((await req('admin/codes',{count:1})).status,401);
+const admin=await req('admin/login',{password:env.ADMIN_PASSWORD});assert.equal(admin.status,200);assert.match(admin.data.token,/^[a-f0-9]{48}$/);const adminHeaders={'X-Mama-Admin':admin.data.token};
+const codes=await req('admin/codes',{count:2,label:'验收'},adminHeaders);assert.equal(codes.status,200);assert.equal(codes.data.generated.length,2);assert.ok(tables.get('mama_codes').every(c=>!('password' in c)));
+for(const c of tables.get('mama_codes'))Object.assign(c,{active:true,used:0,quota:3});
+const auth=await req('auth',{password:codes.data.generated[0].password.toLowerCase()});assert.equal(auth.status,200);assert.equal(auth.data.remaining,3);const headers={'X-Mama-Session':auth.data.token};
+const session=await req('session',undefined,headers);assert.equal(session.data.questions.length,16);assert.ok(!JSON.stringify(session.data.questions).includes('"tag"'));assert.ok(!JSON.stringify(session.data.questions).includes('"w"'));
+const start=await req('start',{},headers);assert.equal(start.status,200);
+assert.equal((await req('complete',{attempt:start.data.attempt,answers:[0]},headers)).status,400);
+const complete=await req('complete',{attempt:start.data.attempt,answers:vectors.elephant,report:{animal:'cat'}},headers);assert.equal(complete.status,200);assert.equal(rpcCalls.find(r=>r.name==='mama_complete').value.p_report.animal,'elephant','忽略客户端伪造报告，服务端计分');
+const demo=await demoApi('complete',{answers:vectors.hen});const shared=await demoApi('result/'+demo.id);assert.equal(shared.report.animal,'hen');assert.equal(shared.report.created,JSON.parse(atob(demo.id.slice(5).replaceAll('-','+').replaceAll('_','/')))[0]);
+await assert.rejects(()=>demoApi('result/demo_invalid'),/无效/);await assert.rejects(()=>demoApi('admin/login',{}),/免费/);
+console.log('PASS: CORS白名单、会话权限、管理员验证、密码哈希、16题、服务端计分、4种类型、免费演示分享链接。');

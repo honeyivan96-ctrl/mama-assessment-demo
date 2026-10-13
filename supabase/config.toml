@@ -1,0 +1,4 @@
+project_id = "mama-assessment"
+[functions.mama-api]
+verify_jwt = false
+# The function verifies its own opaque buyer/admin tokens on every protected route.

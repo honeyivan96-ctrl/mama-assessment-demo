@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env*
+!.env.example
+!.env.demo
+.dev.vars
+.supabase/
+.local/
+supabase/.temp/
+*.tsbuildinfo
