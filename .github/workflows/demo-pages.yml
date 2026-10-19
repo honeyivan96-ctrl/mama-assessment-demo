@@ -18,19 +18,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - id: pages
-        uses: actions/configure-pages@v5
-      - run: npm run build:demo
-        env:
-          VITE_BASE_PATH: ${{ steps.pages.outputs.base_path }}/
-      - run: touch dist/.nojekyll
+      - name: Verify static files
+        run: |
+          test -s site/index.html
+          test -s site/product-home.webp
+      - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
       - id: deployment
         uses: actions/deploy-pages@v4
