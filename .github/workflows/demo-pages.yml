@@ -23,6 +23,11 @@ jobs:
           test -s site/index.html
           test -s site/admin.html
           test -s site/product-home.webp
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check mobile image save
+        run: node tests/mobile-image-save.test.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
