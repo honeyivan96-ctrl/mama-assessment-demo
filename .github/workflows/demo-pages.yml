@@ -21,6 +21,7 @@ jobs:
       - name: Verify static files
         run: |
           test -s site/index.html
+          test -s site/admin.html
           test -s site/product-home.webp
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
