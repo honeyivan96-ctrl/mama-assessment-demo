@@ -26,8 +26,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Check mobile image save
-        run: node tests/mobile-image-save.test.mjs
+      - name: Check personalized reports and image saving
+        run: |
+          node tests/report-upgrade.test.mjs
+          node tests/report-save.test.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

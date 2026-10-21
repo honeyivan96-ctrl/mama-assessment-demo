@@ -1,4 +1,4 @@
-import {QUESTION_BANK,QUESTION_VERSION,buildSubmission,typeName} from "./domain.mjs";
+import {QUESTION_BANK,QUESTION_VERSION,buildSubmission,typeName,refreshStoredReport} from "./domain.mjs";
 const publicQuestions=()=>QUESTION_BANK;
 export type Environment={SUPABASE_URL:string;SUPABASE_SERVICE_ROLE_KEY:string;APP_SECRET:string;ADMIN_PASSWORD:string;ALLOWED_ORIGINS:string};
 export class HttpError extends Error{constructor(message:string,public status=400){super(message);}}
@@ -51,7 +51,7 @@ export function makeHandler(env:Environment,store:Store=createStore(env),now=()=
     const data=await store.rpc("mama_complete_v2",{p_attempt_hash:await digest(input.attempt),p_session_hash:s.hash,p_report:submission.report,p_result_id:randomToken(),p_answers:submission.answers,p_profile:submission.profile,p_context:submission.context,p_questions:submission.questions,p_version:submission.version,p_consent_version:submission.consentVersion,p_now:now()});const saved=await first("mama_results",{select:"report",id:"eq."+data.id});if(!saved)throw new HttpError("结果已保存，请稍后重新获取。",503);return json({...data,report:saved.report});
    }
    if(req.method==="GET"&&path.startsWith("result/")){
-    const id=path.slice(7);if(!/^[a-f0-9]{48}$/.test(id))throw new HttpError("结果链接无效。",404);const r=await first("mama_results",{select:"id,report",id:"eq."+id});if(!r)throw new HttpError("未找到这份结果，请检查链接。",404);return json(r);
+    const id=path.slice(7);if(!/^[a-f0-9]{48}$/.test(id))throw new HttpError("结果链接无效。",404);const r=await first("mama_results",{select:"id,report",id:"eq."+id});if(!r)throw new HttpError("未找到这份结果，请检查链接。",404);const submission=await first("mama_submissions",{select:"answers,profile,context",result_id:"eq."+id});return json({...r,report:refreshStoredReport(r.report,submission)});
    }
    if(req.method==="POST"&&path==="admin/login"){
     await rate(req,"admin-auth",10);const input=await readBody(req);if(typeof input.password!=="string"||!await secureEqual(input.password,env.ADMIN_PASSWORD))throw new HttpError("管理密码不正确。",401);const token=randomToken();await store.query("mama_admin_sessions",{},"POST",{token_hash:await digest(token),expires:now()+28800000});return json({token});
@@ -67,7 +67,7 @@ export function makeHandler(env:Environment,store:Store=createStore(env),now=()=
      const r=await store.query("mama_submissions",{select:"result_id,code_id,profile,report_key,created,question_version",order:"created.desc,result_id.desc",limit:"100",offset:String((page-1)*100)},"GET",undefined,"count=exact");const ids=[...new Set(r.rows.map(x=>x.code_id))];const codes=ids.length?(await store.query("mama_codes",{select:"id,hint,label",id:"in.("+ids.join(",")+")"})).rows:[];return json({items:r.rows.map(row=>({...row,typeName:typeName(row.report_key),code:codes.find(c=>c.id===row.code_id)||{hint:"",label:""}})),total:r.total,page});
     }
     if(req.method==="GET"&&/^admin\/submissions\/[a-f0-9]{48}$/.test(path)){
-     const id=path.slice("admin/submissions/".length);const row=await first("mama_submissions",{select:"*",result_id:"eq."+id});if(!row)throw new HttpError("未找到记录。",404);const report=await first("mama_results",{select:"report",id:"eq."+id});const code=await first("mama_codes",{select:"hint,label",id:"eq."+row.code_id});return json({submission:row,report:report?.report||null,code:code||{hint:"",label:""}});
+     const id=path.slice("admin/submissions/".length);const row=await first("mama_submissions",{select:"*",result_id:"eq."+id});if(!row)throw new HttpError("未找到记录。",404);const report=await first("mama_results",{select:"report",id:"eq."+id});const code=await first("mama_codes",{select:"hint,label",id:"eq."+row.code_id});return json({submission:row,report:report?.report?refreshStoredReport(report.report,row):null,code:code||{hint:"",label:""}});
     }
 
     if(req.method==="POST"&&path==="admin/logout"){await store.query("mama_admin_sessions",{token_hash:"eq."+adminHash},"DELETE");return json({ok:true});}

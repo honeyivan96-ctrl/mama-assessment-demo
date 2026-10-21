@@ -1,3 +1,4 @@
+import {enrichReport} from "./report-copy.mjs";
 
 const SCORE_DIMS=['情感回应','规则与跟进','自主支持','沟通与修复','日常连接'];
 const SCORE_PRIMARY=[0,0,1,1,2,2,3,3,4,4];
@@ -52,8 +53,9 @@ export function buildSubmission(input,created=Date.now()){
  const belief=validIndices(c.belief,5,3),pain=validIndices(c.pain,6,2,true);if(pain.includes(5)&&pain.length!==1)throw new Error('暂无困扰需单独选择。');
  if(c.other!==undefined&&typeof c.other!=='string')throw new Error('其他困扰格式无效。');
  const other=pain.includes(6)?(c.other||'').trim():'';if(other.length>300)throw new Error('其他困扰请控制在300字以内。');
- const data=calculateReport(input.answers);const report={...data,version:QUESTION_VERSION,profile:REPORT_TYPES[data.key],dimensions:data.dimensions.map((d,i)=>({...d,analysis:dimText(d,i)})),summary:dimensionSummary(data),created};
+ const data=calculateReport(input.answers);const report=enrichReport({...data,version:QUESTION_VERSION,profile:REPORT_TYPES[data.key],dimensions:data.dimensions.map((d,i)=>({...d,analysis:dimText(d,i)})),summary:dimensionSummary(data),created},{answers:input.answers,profile:p,context:{belief,pain}});
  return {answers:[...input.answers],profile:{role:p.role,age:p.age,sex:p.sex,childAge:p.childAge},context:{belief,pain,other},report,questions:QUESTION_BANK,version:QUESTION_VERSION,consentVersion:CONSENT_VERSION};
 }
-export function typeName(key){return REPORT_TYPES[key]?.name||key;}
+export function typeName(key){return ["varied","mixed"].includes(key)?"熊猫妈妈":REPORT_TYPES[key]?.name||key;}
+export function refreshStoredReport(report,submission){return enrichReport(report,submission||{}); }
 export {calculateReport};
