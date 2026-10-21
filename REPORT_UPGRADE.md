@@ -11,3 +11,7 @@
 五种动物插画为本项目原创SVG。二维码库固定为qrcode-generator 1.4.4，在`site/vendor`本地加载，无运行时第三方CDN。二维码进入测评首页，密码验证流程不变。
 
 检查：`node tests/report-upgrade.test.mjs`与`node tests/report-save.test.mjs`。
+
+## #223 插画与棕熊妈妈
+
+2026-10-21：启用经用户确认的五款 #223 水彩贴纸插画，`site/animals/*-223.webp`。大象妈妈的显示名称改为棕熊妈妈，历史计分类别 key 仍为 elephant；评分不变。新分享链接使用 #card=bear，旧 #card=elephant 继续兼容。原始 PNG 保存在本地项目 approved-art/，网站使用压缩 WebP。图片在导出时等比缩放，保持圆形边框。文案版本 warm-report-20261021-v223，浏览器缓存参数同步更新。

@@ -1,13 +1,13 @@
 // Editorial interpretation only. The existing question weights and type decisions stay unchanged.
-const REPORT_EDITION='warm-report-20261020';
+const REPORT_EDITION='warm-report-20261021-v223';
 const THEMES={
- elephant:{animal:'elephant',name:'大象妈妈',color:'#56796e',soft:'#e4eee6',tag:'给孩子依靠，也给他长大的空间。',closing:'风雨来时，为你撑伞；\n平淡日常，陪你三餐；\n低谷迷茫，予你心安；\n岁月漫漫，与你相伴。\n\n孩子，妈妈愿陪你看四季烟火，\n也愿看你自在地翱翔蓝天。'},
+ elephant:{animal:'bear',name:'棕熊妈妈',color:'#56796e',soft:'#e4eee6',tag:'给你温暖的依靠，也给你长大的空间。',closing:'风雨来时，为你撑伞；\n平淡日常，陪你三餐；\n低谷迷茫，予你心安；\n岁月漫漫，与你相伴。\n\n孩子，妈妈愿陪你看四季烟火，\n也愿看你自在地翱翔蓝天。'},
  tiger:{animal:'tiger',name:'老虎妈妈',color:'#9c7046',soft:'#f5e9d8',tag:'把责任放在心上，把方向握在手里。',closing:'愿你的坚定，给他方向；\n愿你的温柔，让他敢讲。\n\n有一天，他走得很远，\n仍愿意回头，和你说说心里话。'},
  hen:{animal:'hen',name:'母鸡妈妈',color:'#b37b70',soft:'#f6e7df',tag:'总想先把孩子的心，照顾妥帖。',closing:'爱是风雨里的一把伞，\n也是出发前的一次放手。\n\n愿你陪他走过眼前的路，\n也相信，他会走出自己的远方。'},
  cat:{animal:'cat',name:'猫妈妈',color:'#7c7796',soft:'#ece9f4',tag:'给他探索的空间，也留一份回头的安心。',closing:'给他探索世界的自由，\n也给他回头找你的安心。\n\n愿他奔向远方时，心里始终知道：\n妈妈在，家就在。'},
  panda:{animal:'panda',name:'熊猫妈妈',color:'#6a786a',soft:'#e9eddf',tag:'有自己的柔软，也有自己的坚持。',closing:'有时温柔，有时着急；\n一边爱着，一边学习。\n\n愿你陪孩子慢慢长大，\n也给自己，被理解和拥抱的余地。'}
 };
-function reportTheme(key){return THEMES[key]||THEMES.panda;}
+function reportTheme(key){return THEMES[key==='bear'?'elephant':key]||THEMES.panda;}
 function scoreHighlights(dimensions){const values=dimensions.map(d=>d.score).filter(s=>Number.isFinite(s));if(!values.length)return {high:[],low:[],equal:true};const max=Math.max(...values),min=Math.min(...values),equal=max===min;return {high:equal?[]:dimensions.flatMap((d,i)=>d.score===max?[i]:[]),low:equal?[]:dimensions.flatMap((d,i)=>d.score===min?[i]:[]),equal,max,min};}
 const BODY={
  elephant:['你愿意理解孩子，也希望事情有一个结果。','孩子难过时，你愿意先了解感受；遇到约定和选择，你也重视安排、商量与后续行动。你的关心里，既有依靠，也有让他练习独立的空间。','有时，把一小步交回孩子手里，不是少爱一点，而是相信他可以慢慢学会。'],

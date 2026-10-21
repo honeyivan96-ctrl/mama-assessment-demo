@@ -56,6 +56,6 @@ export function buildSubmission(input,created=Date.now()){
  const data=calculateReport(input.answers);const report=enrichReport({...data,version:QUESTION_VERSION,profile:REPORT_TYPES[data.key],dimensions:data.dimensions.map((d,i)=>({...d,analysis:dimText(d,i)})),summary:dimensionSummary(data),created},{answers:input.answers,profile:p,context:{belief,pain}});
  return {answers:[...input.answers],profile:{role:p.role,age:p.age,sex:p.sex,childAge:p.childAge},context:{belief,pain,other},report,questions:QUESTION_BANK,version:QUESTION_VERSION,consentVersion:CONSENT_VERSION};
 }
-export function typeName(key){return ["varied","mixed"].includes(key)?"熊猫妈妈":REPORT_TYPES[key]?.name||key;}
+export function typeName(key){return key==="elephant"?"棕熊妈妈":["varied","mixed"].includes(key)?"熊猫妈妈":REPORT_TYPES[key]?.name||key;}
 export function refreshStoredReport(report,submission){return enrichReport(report,submission||{}); }
 export {calculateReport};
