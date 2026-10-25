@@ -1,11 +1,11 @@
 // Editorial interpretation only. The existing question weights and type decisions stay unchanged.
-export const REPORT_EDITION='warm-report-20261021-v223';
+export const REPORT_EDITION='clear-report-20261025';
 export const THEMES={
- elephant:{animal:'bear',name:'棕熊妈妈',color:'#56796e',soft:'#e4eee6',tag:'给你温暖的依靠，也给你长大的空间。',closing:'风雨来时，为你撑伞；\n平淡日常，陪你三餐；\n低谷迷茫，予你心安；\n岁月漫漫，与你相伴。\n\n孩子，妈妈愿陪你看四季烟火，\n也愿看你自在地翱翔蓝天。'},
- tiger:{animal:'tiger',name:'老虎妈妈',color:'#9c7046',soft:'#f5e9d8',tag:'把责任放在心上，把方向握在手里。',closing:'愿你的坚定，给他方向；\n愿你的温柔，让他敢讲。\n\n有一天，他走得很远，\n仍愿意回头，和你说说心里话。'},
- hen:{animal:'hen',name:'母鸡妈妈',color:'#b37b70',soft:'#f6e7df',tag:'总想先把孩子的心，照顾妥帖。',closing:'爱是风雨里的一把伞，\n也是出发前的一次放手。\n\n愿你陪他走过眼前的路，\n也相信，他会走出自己的远方。'},
- cat:{animal:'cat',name:'猫妈妈',color:'#7c7796',soft:'#ece9f4',tag:'给他探索的空间，也留一份回头的安心。',closing:'给他探索世界的自由，\n也给他回头找你的安心。\n\n愿他奔向远方时，心里始终知道：\n妈妈在，家就在。'},
- panda:{animal:'panda',name:'熊猫妈妈',color:'#6a786a',soft:'#e9eddf',tag:'有自己的柔软，也有自己的坚持。',closing:'有时温柔，有时着急；\n一边爱着，一边学习。\n\n愿你陪孩子慢慢长大，\n也给自己，被理解和拥抱的余地。'}
+ elephant:{animal:'bear',name:'棕熊妈妈',color:'#56796e',soft:'#e4eee6',tag:'回应孩子的感受，也坚持清楚的约定。',closing:'风雨来时，为你撑伞；\n平淡日常，陪你三餐；\n低谷迷茫，予你心安；\n岁月漫漫，与你相伴。\n\n孩子，妈妈愿陪你看四季烟火，\n也愿看你自在地翱翔蓝天。'},
+ tiger:{animal:'tiger',name:'老虎妈妈',color:'#9c7046',soft:'#f5e9d8',tag:'更倾向由自己确定要求，让孩子先执行。',closing:'愿你的坚定，给他方向；\n愿你的温柔，让他敢讲。\n\n有一天，他走得很远，\n仍愿意回头，和你说说心里话。'},
+ hen:{animal:'hen',name:'母鸡妈妈',color:'#b37b70',soft:'#f6e7df',tag:'先照顾孩子的感受，执行约定时容易让步。',closing:'爱是风雨里的一把伞，\n也是出发前的一次放手。\n\n愿你陪他走过眼前的路，\n也相信，他会走出自己的远方。'},
+ cat:{animal:'cat',name:'猫妈妈',color:'#7c7796',soft:'#ece9f4',tag:'把决定交给孩子，主动介入与跟进较少。',closing:'给他探索世界的自由，\n也给他回头找你的安心。\n\n愿他奔向远方时，心里始终知道：\n妈妈在，家就在。'},
+ panda:{animal:'panda',name:'熊猫妈妈',color:'#6a786a',soft:'#e9eddf',tag:'面对不同的事情，会采用不同的处理方式。',closing:'有时温柔，有时着急；\n一边爱着，一边学习。\n\n愿你陪孩子慢慢长大，\n也给自己，被理解和拥抱的余地。'}
 };
 export function reportTheme(key){return THEMES[key==='bear'?'elephant':key]||THEMES.panda;}
 export function scoreHighlights(dimensions){const values=dimensions.map(d=>d.score).filter(s=>Number.isFinite(s));if(!values.length)return {high:[],low:[],equal:true};const max=Math.max(...values),min=Math.min(...values),equal=max===min;return {high:equal?[]:dimensions.flatMap((d,i)=>d.score===max?[i]:[]),low:equal?[]:dimensions.flatMap((d,i)=>d.score===min?[i]:[]),equal,max,min};}
@@ -49,27 +49,50 @@ const DIMENSIONS=[
  ]
 ];
 function ageTip(profile={}){const age=parseInt(profile.childAge,10);if(!Number.isFinite(age))return '';if(age<6)return '可以把要求变成短一些、做得到的一小步，陪着练习。';if(age<=9)return '如果孩子还在小学低年级，约定具体一点、一次少一点，更方便一起落实。';if(age<=12)return '如果孩子已经进入小学中高年级，可以让他参与商量约定，同时保留后续确认。';return '孩子渐渐长大，边界可以更多通过商量形成，但支持和跟进仍然可以在场。';}
-function contextCopy(answers,context={}){const beliefs=context.belief||[],pains=context.pain||[];let ideal='',concern='',title='';
- if(beliefs.includes(4)){ideal='你认同尊重孩子的兴趣和感受，希望他能快乐成长。';if([0,1].includes(answers[3])&&answers[4]===0){ideal+='不过，在作业和兴趣选择上，你也更倾向于由自己定下方向。对你来说，放手也许最难的地方，是还不放心。';title='你想尊重他的选择，也有自己放不下的担心。';}}
- else if(beliefs.includes(1)){ideal='你认同“没有规矩不成方圆”，希望孩子学会遵守约定。';if([2,3].includes(answers[3]))ideal+='但在手机与作业的选择中，提醒之后的跟进相对少一些。你在意规则，也许还在寻找让它落地的办法。';}
- else if(beliefs.includes(3)){ideal='你认同尽早准备，希望给孩子多一些成长的机会。适合他的节奏，也值得和投入一起被看见。';}
- else if(beliefs.includes(5)){ideal='你看重坚持和吃苦，希望孩子遇到困难时有继续走下去的力量。努力之外，他也需要知道自己可以求助。';}
- else if(beliefs.includes(2)){ideal='你比较认同学习与天赋有关。这是你理解孩子差异的一种方式；具体困难，也仍值得从方法、练习和支持中一起寻找线索。';}
- else if(beliefs.includes(0)){ideal='你认同在孩子犯错时需要较强的约束。希望他记住教训的同时，也可以看看：怎样把要求讲清楚，让他愿意说出真实的困难。';}
- if(pains.includes(2)){concern='你提到，孩子与你交流少，感觉不够亲近。';concern+=answers[8]===2||answers[8]===0?'同时，你也报告孩子会主动分享一些学校里的事。也许你期待的不只是“说过什么”，而是彼此能更懂一点。':'这与本次主动分享较少的回答有所呼应。比起立刻追问，多一些不急着评价的倾听，可能更容易为聊天留住空间。';title=title||'你想知道的，不只是他过得怎样，还有他心里怎么想。';}
- else if(pains.includes(0)){concern='你提到，孩子的学习表现还没有达到你的期待。';concern+=answers[0]===2?'但在考差的情境里，你仍愿意先安抚、了解，再分析问题。你在意成绩，也不想让他独自面对难过。':answers[0]===0?'在考差的情境里，你选择先指出学习态度和习惯。你希望他及时调整，也可以留意：着急的时候，他是否还听得见你的用心。':'期待进步与照顾关系，可能正同时牵动着你。一次表现之外，也可以和孩子一起看清他卡在哪一步。';title=title||'你放心不下他的学习，也想找到更合适的陪伴方式。';}
- else if(pains.includes(1)){concern='你提到，电子产品的使用让你反复操心。';concern+=answers[3]===1?'在答题里，你也选择重申约定并要求落实。规则已经提出，接下来值得留意的是：约定是否具体，以及双方能否持续做到。':answers[3]===0?'你的第一步是收走手机、让他开始作业。这样能结束当下的游戏，之后也可以再一起把使用约定谈清楚。':'在相关情境中，你更倾向于提醒或暂时不介入。反复催促之外，清楚的时间安排与后续确认，可以让下一步更具体。';title=title||'你想结束的，不只是一次游戏，还有反复提醒的疲惫。';}
- else if(pains.includes(3)){concern='你提到，孩子不配合要求，容易发生争执。';concern+=answers[7]===2?'但冷静之后，你仍愿意承认自己说重了、听听他的感受。这说明即使有分歧，你也在认真寻找重新沟通的路。':'要求之外，也可以留意争执结束后，有没有机会把彼此没说完的话说清楚。';title=title||'你希望他愿意配合，也希望你们不用总靠争执说话。';}
- else if(pains.includes(4)){concern='你提到，不知道该管到什么程度，怕管多了，也怕管少了。这份犹豫，并不意味着你不懂孩子，而是你在认真寻找责任与放手之间的分寸。';title=title||'你不是不想放手，而是在寻找放心放手的分寸。';}
- else if(pains.includes(5)){concern='你对目前的相处比较满意。这份感受值得珍惜；下面的五维画像，可以帮你看清哪些日常做法正在支持你们。';}
- else if(pains.includes(6)){concern='你补充了属于自己的育儿困扰。这份画像先从十个日常片段出发，帮助你找到可以进一步观察的线索；不会仅凭一段描述就判断原因。';}
- const beliefOrder=[4,1,3,5,2,0],mainBelief=beliefOrder.find(i=>beliefs.includes(i)),beliefNames=['孩子犯错时需要较强约束','孩子应学会遵守规则','学习表现主要与天赋有关','尽早准备、提前学习','尊重兴趣、快乐成长','成长需要吃苦和坚持'];const additionalBeliefs=beliefs.filter(i=>i!==mainBelief);if(additionalBeliefs.length)ideal+=' 你也比较认同“'+additionalBeliefs.map(i=>beliefNames[i]).join('”“')+'”。这些期待需要在具体生活里一起寻找平衡。';
- const painOrder=[2,0,1,3,4,5,6],mainPain=painOrder.find(i=>pains.includes(i)),otherPain=pains.find(i=>i!==mainPain);const additionalPain={0:'你也在为学习表现与期待的差距操心；一起找到具体卡点，比只盯着结果更容易着手。',1:'你也提到电子产品使用难控制；把使用时间、结束方式和后续确认商量清楚，可以让提醒更具体。',2:'你也期待和孩子更亲近；不急着评价的闲聊，可以给表达多留一点空间。',3:'你也提到配合与争执的困扰；分歧结束后，把彼此没说完的话说开，同样值得关注。',4:'你也在寻找管与放的分寸；可以从他已经会做的一件事开始，交出行动，保留支持。',6:'你还补充了自己的困扰，具体原因需要更多了解，这份画像先提供日常观察的线索。'};if(otherPain!==undefined&&additionalPain[otherPain])concern+=' '+additionalPain[otherPain];
- return {ideal,concern,title};}
+// Concrete statements tied to the selected handling, not inferred personality motives.
+const ANSWER_OBSERVATIONS=[
+ ['孩子考差、难过时，你会先指出他的学习态度和习惯。','孩子考差、难过时，你会先安慰他，这次不再提试卷和成绩。','孩子考差、难过时，你会先安抚、了解，再一起分析试卷。','孩子考差、难过时，你会直接看错题、给他讲解。'],
+ ['孩子说被欺负时，你会先安慰他，再联系老师处理。','孩子说被欺负时，你会先观察几天，暂不介入。','孩子说被欺负时，你会先问清时间、地点和经过，再决定怎么处理。','孩子说被欺负时，你会先确认安全、安抚情绪，再了解经过，并告诉他接下来的安排。'],
+ ['孩子不想去英语班时，你认为已经报班就应按时去。','孩子不想去英语班时，你会先同意这次不去，下次再看他的意愿。','孩子不想去英语班时，你会了解原因，商量继续、调整或退出，并明确后续安排。','孩子不想去英语班时，你会让他自己决定，并不再跟进是否学习。'],
+ ['孩子先玩手机、没写作业时，你会收走手机，要求他立即写。','孩子先玩手机、没写作业时，你会重申之前的约定，让他关掉手机去写作业。','孩子先玩手机、没写作业时，你会提醒他稍后写，之后主要等他自己开始。','孩子先玩手机、没写作业时，你暂不介入，等孩子或老师提到问题时再处理。'],
+ ['兴趣班意见不同时，你会根据自己的判断替孩子选定。','兴趣班意见不同时，你会和孩子了解课程、讨论后协商决定。','兴趣班意见不同时，你会先筛出认可的课程，再让孩子选择。','兴趣班意见不同时，你会按孩子的兴趣决定。'],
+ ['孩子会收书包却等你帮忙时，你会让他先收，之后一起检查。','孩子会收书包却等你帮忙时，你会直接替他收好。','孩子会收书包却等你帮忙时，你会在旁边逐项提醒。','孩子会收书包却等你帮忙时，你会交给他自己负责，也不再检查。'],
+ ['发现批评错了时，你会不再提，让事情过去。','发现批评错了时，你会明确承认、道歉，并说明父母也会犯错。','发现批评错了时，你会告诉他已知道是误会，但不再讨论刚才的批评。','发现批评错了时，你会承认误会，同时解释自己当时为什么着急。'],
+ ['争执后，你会用拿水果、陪他做事等行动缓和气氛，不再谈争吵。','争执后，你会等孩子先承认问题，再恢复交流。','争执后，你会主动承认说重了，听他的感受，再讨论下次怎么处理。','争执后，你会解释自己太着急，然后继续提醒他完成任务。'],
+ ['孩子主动分享学校里的事，大约一周有几次。','孩子很少或没有主动分享学校里的事。','孩子几乎每天都会主动分享学校里的事。','孩子主动分享学校里的事，大约一周一次。'],
+ ['你们很少或没有一起玩、散步或不谈学习地闲聊。','你们几乎每天都有一段一起玩、散步或不谈学习的闲聊时间。','你们一起玩、散步或不谈学习地闲聊，大约一周一次。','你们一起玩、散步或不谈学习地闲聊，大约一周有几次。']
+];
+function observation(answers,q){return ANSWER_OBSERVATIONS[q]?.[answers[q]]||'';}
+function identityExplanation(report,answers){const key=report.key,complete=answers.length===10,emotion=report.dimensions[0],rules=report.dimensions[1];let definition='',symbolism='',indices=[],meanings=[];
+ if(key==='elephant'){definition='你既回应孩子的感受，也重视约定，并给孩子参与和尝试的机会。';symbolism='棕熊的厚实、温暖是我们为“有支持，也有边界”选择的形象。这个名称对应的是你的处理方式，不是真实动物教养行为的结论。';indices=[report.dimensions[0].main[0]>=report.dimensions[0].main[1]?0:1,2,[1,2,3].includes(answers[4])?4:5];meanings=['你没有只看事情做没做好，也会回应孩子的处境或感受。','你会提出要求，或把后续学习安排说清楚。','你给孩子一定参与或动手的机会。'];}
+ else if(key==='tiger'){definition='在这些场景里，你更倾向于自己确定要求，让孩子先执行。';symbolism='我们用老虎果断、重视方向的形象，来表示“要求主导”的处理方式。它不是说你凶，也不是评价你爱得多不多。';indices=[[2,0],[3,0],[4,0],[7,1]].filter(([q,a])=>answers[q]===a).slice(0,3).map(([q])=>q);meanings=indices.map(()=> '这次处理更强调由家长明确要求、掌握决定或等待孩子先配合。');}
+ else if(key==='hen'){definition='你会先照顾孩子的感受；执行约定时，也更容易让一步。';symbolism='母鸡张开翅膀护着孩子的形象，用来比喻你愿意先安慰、先缓一缓的做法。我们判断的是这几题中的关心与让步，不是说你事事包办。';indices=[emotion.main[0]>=emotion.main[1]?0:1,2,3];meanings=['你愿意先回应孩子的难过或不安。','你这次选择了先让步，没有立即要求继续上课。','你进行了提醒，但后续主要等待孩子自己行动。'];}
+ else if(key==='cat'){definition='学习和手机的问题上，你把决定交给孩子，主动介入与跟进较少。';symbolism='猫的独立、保留空间是这里的设计比喻，对应的是“较少介入”。这不等于孩子已经能独立负责，也不等于你不关心他。';indices=[2,3];meanings=['你给了选择权，但这次没有继续提供安排或跟进。','你选择暂不介入，而不是立即确认约定是否做到。'];}
+ else if(key==='varied'){const emotional=emotion.varied;definition=emotional?'面对考差和被欺负这两种困难，你回应孩子的方式有明显区别。':'面对英语班和手机作业这两类约定，你坚持与跟进的方式有明显区别。';symbolism='熊猫妈妈在这里表示“分情境处理”。我们用柔软、也有自己坚持的形象来记住这种组合，而不是认定你忽冷忽热或没有原则。';indices=emotional?[0,1]:[2,3];meanings=emotional?['这是你在考试情境里的选择。','这是你在同伴问题里的选择；两种情境下，你回应感受的程度不同。']:['这是你在英语班问题里的选择。','这是你在手机与作业问题里的选择；两种情境下，你坚持安排的程度不同。'];}
+ else if(key==='mixed'){definition='你的回答没有明显偏向一种固定做法，既有回应，也有要求和不同程度的放手。';symbolism='因此，这次用熊猫妈妈表示几种处理方式的组合。单靠这十题，还不能把你归为一种清晰的主导风格；下面的具体选择比动物名称更能说明你。';indices=[0,3,5];meanings=['你在孩子难过时这样处理。','你在执行约定时这样处理。','你在孩子可以自己做的事情上这样处理。'];}
+ else if(key==='balanced'){definition='情绪回应与规则要求都比较明确；让孩子自主参与的做法还不完全一样。';symbolism='这次保留“支持与边界并重”的文字画像，不强行归入一种动物。配图只是帮助识别报告，不是额外的判断依据。';indices=[0,2,5];meanings=['这是你回应孩子难过的做法。','这是你处理学习安排的做法。','这是你分配孩子自己动手的机会的做法。'];}
+ else if(key==='demand'){definition='你更关注要求是否执行，直接回应孩子情绪的做法相对少一些。';symbolism='现有回答还不满足老虎妈妈的具体判断条件，因此保留“要求主导”的文字说明，避免把不同做法都贴成同一个动物标签。';indices=[0,3];meanings=['你优先处理考试后的问题。','你对作业约定采取了这样的处理方式。'];}
+ else if(key==='warm'){definition='你对孩子的情绪有回应，但在学习与手机问题上，后续安排相对少一些。';symbolism='这次保留“感受优先”的文字画像。你的选择还不足以判断为一种固定的放任方式，也不强行归入母鸡妈妈。';indices=[emotion.main[0]>=emotion.main[1]?0:1,3];meanings=['你较愿意照顾或了解孩子的处境。','这里的安排与跟进体现得相对少一些。'];}
+ else{definition='这次相关回答中，直接回应与持续跟进体现得较少。';symbolism='这只是本次情境的观察，不足以认定你属于忽视型，也不能概括你们关系的全部。';indices=[0,3];meanings=['这是你在孩子考差时的处理方式。','这是你在手机与作业问题上的处理方式。'];}
+ const evidence=complete?indices.map((q,i)=>({scene:['考试后的情绪','同伴问题','英语班安排','手机与作业','兴趣班选择','自己收书包','被误会后的处理','争执后的处理','主动分享','一起相处'][q],choice:observation(answers,q),meaning:meanings[i]})):[];
+ return {intro:'我们用动物形象给不同的相处方式起名字。先看你怎么处理事情，再解释为什么匹配这个形象；动物没有好坏排名。',definition,symbolism,evidence};}
+function contextCopy(answers,context={}){const beliefs=context.belief||[],pains=context.pain||[],beliefLabels=['孩子犯错时，有时需要打骂才能记住','孩子应学会遵守规则','学习表现主要看天赋','应该提前学、尽早学','尊重兴趣与感受，让孩子快乐成长','成长需要吃苦和坚持'];let ideal=beliefs.length?'你认同的观念是：'+beliefs.map(i=>'“'+beliefLabels[i]+'”').join('、')+'。':'';if(beliefs.includes(4)&&answers[4]===0)ideal+=' 不过，兴趣班意见不同时，你会由自己选定。你认同尊重兴趣，在这件事上却更倾向于家长决定。';else if(beliefs.includes(1)&&[2,3].includes(answers[3]))ideal+=' 不过，在手机问题上，你选择提醒后等待或暂不介入。你重视规则，但这次对落实的跟进相对少。';
+ const messages={
+ 0:'你最在意学习表现达不到预期。'+observation(answers,0)+' '+(answers[0]===2?'你可以保留先安抚、再分析的顺序；分析时先找一类最需要解决的错题，和孩子约好怎么练、何时一起看进展。':answers[0]===0?'除了指出态度问题，也可以和孩子一起确认具体不会哪一步，再约定一个能检查的小目标。':'下一次可以把问题落到“这类题卡在哪一步、准备怎么练”，而不只停在成绩好不好。'),
+ 1:'你提到电子产品使用难控制。'+observation(answers,3)+' '+(answers[3]===1?'这说明你会重申约定，但不代表约定已经持续执行。可以把何时玩、玩多久、到点怎么结束和违反后怎么处理，一起说清楚。':answers[3]===0?'收走手机能结束眼前的游戏；冷静后，再商量清楚使用时间和结束方式，减少每次都重新争执。':'提醒之后，可以再加一个具体的确认时间，和孩子一起检查约定有没有做到。'),
+ 2:'你觉得与孩子交流少、不够亲近。'+observation(answers,8)+' '+([0,2].includes(answers[8])?'他已经会分享一些事情，但这不一定满足你对亲近的期待。可以留意分享时，你们是在继续聊天，还是很快转成建议和提醒。':'可以每天留一小段不谈作业的时间；他愿意说时，先听完，再问要不要一起想办法。'),
+ 3:'你提到孩子不配合要求、容易争执。'+observation(answers,7)+' '+(answers[7]===2?'你已经愿意重新沟通。接下来可以把双方下次要怎么做说具体，例如谁先暂停、什么时候再谈。':'可以在冷静后补一次沟通：说清自己哪句话不合适，再听孩子怎么理解这件事，最后确认下一步。'),
+ 4:'你不确定该管多少。'+observation(answers,5)+' 可以先从孩子已经会做的一件事练习：由他动手，提前约好什么时候检查、遇到什么困难可以求助。',
+ 5:'你对目前的相处比较满意。下面的五维解读会说明，你在哪些情境里回应了孩子、提出了要求，或给了他自己尝试的机会。',
+ 6:'你还补充了自己的育儿困扰。自由填写的内容不会被自动当成问题原因；本报告先用十道情景题中的具体选择，帮助你观察日常做法。'};
+ const concern=pains.map(i=>messages[i]).filter(Boolean).join('\n\n');return {ideal,concern,title:'你的观念、困扰与实际做法'};}
+
 function strengths(data,high){const names=high.map(i=>data.dimensions[i].name);if(!names.length)return {title:'你的五个方面，呈现得比较接近。',text:'这次没有特别突出的高低项，可以把目光放回具体情境：哪些做法让彼此更轻松，哪些时刻还需要一起摸索。'};const max=Math.max(...data.dimensions.map(d=>d.score??0));if(max<67)return {title:'先看见已经显现的线索。',text:'“'+names.join('、')+'”是本次相对突出的方面。这里比较的是你自己的五项刻度，不表示已经达到某种标准；具体做法比一个高低标签更值得关注。'};if(high.includes(0)&&high.includes(3))return {title:'你很在意，孩子有没有被听见。',text:'情感回应、沟通与修复是本次突出的方面。孩子难过时，你愿意了解；发生误会后，你也愿意把话说开。你关注的不只是事情有没有完成，也在意关系有没有被照顾。'};const descriptions=['你愿意照顾孩子的感受，为后续沟通留出空间。','你愿意把要求变成具体行动，让约定有后续。','你给孩子参与和尝试的机会，也保留可获得的帮助。','你愿意面对误会和分歧，寻找重新靠近的方式。','你们有主动分享、一起玩或闲聊的日常机会。'];return {title:'你已经拥有，值得珍惜的力量。',text:'本次“'+names.join('、')+'”最为突出。'+high.map(i=>descriptions[i]).join('')};}
-export function enrichReport(report,input={}){if(report.edition===REPORT_EDITION)return report;const answers=input.answers||[],profile=input.profile||{},context=input.context||{},key=report.key||'mixed',theme=reportTheme(key),base=BODY[key]||BODY.mixed,hasAnswers=answers.length===10,observed=hasAnswers?contextCopy(answers,context):{ideal:'',concern:'',title:''},highlights=scoreHighlights(report.dimensions);
- const dimensions=report.dimensions.map((d,i)=>{const level=d.score===null?null:d.score>=67?2:d.score<=33?0:1;let copy=level===null?['这一项还需要更多信息。','完成相关问题后，再一起看看。','']:DIMENSIONS[i][level];copy=[...copy];if(i===1&&level===0&&hasAnswers&&(answers[2]===1||answers[3]===2)){copy[0]='有时心一软，约定就暂时放到了一边。';copy[1]='在相关情境里，你倾向于先同意暂停，或提醒后等孩子自己行动。也许是不忍心，也许是提醒多了感到疲惫；具体原因还需要你自己判断。';}if(i===1&&level!==null&&level<2&&ageTip(profile))copy[2]+=' '+ageTip(profile);return {...d,title:copy[0],analysis:copy[1],reminder:copy[2]};});
- const strongest=strengths(report,highlights.high),lowNames=highlights.low.map(i=>report.dimensions[i].name),highNames=highlights.high.map(i=>report.dimensions[i].name);let summary=highlights.equal?'五项刻度比较接近。把它看成一张观察日常的地图，不需要用总分评价自己。':highlights.min>=67?'五个方面都呈现了较多相关做法。“'+lowNames.join('、')+'”只是相对较少，不代表做得不好；继续珍惜已经拥有的日常连接，也给自己留一点从容。':'你在“'+highNames.join('、')+'”上呈现得较多。在“'+lowNames.join('、')+'”的具体情境里多留意一点，能让关心和行动更好地接上。';
- const isAnimal=['elephant','tiger','hen','cat','varied','mixed'].includes(key);const p={...report.profile,name:isAnimal?theme.name:report.profile.name,tag:isAnimal?theme.tag:report.profile.tag,closing:theme.closing,body:base[1],edge:base[2]};
- return {...report,edition:REPORT_EDITION,profile:p,theme,dimensions,highlights,strengths:strongest,portrait:{title:observed.title||base[0],paragraphs:[base[1],observed.ideal,observed.concern].filter(Boolean),takeaway:base[2]},summary,reference:{kind:'within-person',text:'分数是本次回答的呈现程度；目前不展示人群排名。'}};
+export function enrichReport(report,input={}){
+ if(report.edition===REPORT_EDITION)return report;
+ const answers=input.answers||[],profile=input.profile||{},context=input.context||{},key=report.key||'mixed',theme=reportTheme(key),identity=identityExplanation(report,answers),observed=answers.length===10?contextCopy(answers,context):{ideal:'',concern:'',title:'你的观念与实际做法'},highlights=scoreHighlights(report.dimensions);
+ const dimensions=report.dimensions.map((d,i)=>{const level=d.score===null?null:d.score>=67?2:d.score<=33?0:1;let copy=level===null?['这一项还需要更多信息。','完成相关问题后，再一起看看。','']:DIMENSIONS[i][level];copy=[...copy];if(i===1&&level===0&&answers.length===10&&(answers[2]===1||answers[3]===2)){copy[0]='你会提醒或先让一步，之后的跟进相对少。';copy[1]='在英语班或手机作业的情境里，你选择了先同意暂停，或提醒后等待孩子自己行动。题目不能判断你是心软还是疲惫，只能反映这次选择的处理方式。';}if(i===1&&level!==null&&level<2&&ageTip(profile))copy[2]+=' '+ageTip(profile);return {...d,title:copy[0],analysis:copy[1],reminder:copy[2]};});
+ const strongest=strengths(report,highlights.high),lowNames=highlights.low.map(i=>report.dimensions[i].name),highNames=highlights.high.map(i=>report.dimensions[i].name),summary=highlights.equal?'五项刻度相同，没有最高或最低项。请结合各项对应的具体选择理解，不需要给自己算一个总分。':highlights.min>=67?'五个方面都呈现了较多相关做法。“'+lowNames.join('、')+'”只是相对较少，不代表做得不好。':'本次“'+highNames.join('、')+'”相关做法体现得较多。“'+lowNames.join('、')+'”相对较少，可以结合这一项的具体提醒，选一件日常小事尝试调整。';
+ const isAnimal=['elephant','tiger','hen','cat','varied','mixed'].includes(key),p={...report.profile,name:isAnimal?theme.name:report.profile.name,tag:isAnimal?theme.tag:report.profile.tag,closing:theme.closing,body:identity.definition,edge:''};
+ return {...report,edition:REPORT_EDITION,profile:p,theme,identity,dimensions,highlights,strengths:strongest,portrait:{title:observed.title,paragraphs:[observed.ideal,observed.concern].filter(Boolean),takeaway:''},summary,reference:{kind:'within-person',text:'分数是本次回答的呈现程度；目前不展示人群排名。'}};
 }
