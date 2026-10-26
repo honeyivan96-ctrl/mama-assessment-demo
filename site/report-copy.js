@@ -1,5 +1,5 @@
 // Editorial interpretation only. The existing question weights and type decisions stay unchanged.
-const REPORT_EDITION='clear-report-20261025';
+const REPORT_EDITION='four-pages-20261026';
 const THEMES={
  elephant:{animal:'bear',name:'棕熊妈妈',color:'#56796e',soft:'#e4eee6',tag:'回应孩子的感受，也坚持清楚的约定。',closing:'风雨来时，为你撑伞；\n平淡日常，陪你三餐；\n低谷迷茫，予你心安；\n岁月漫漫，与你相伴。\n\n孩子，妈妈愿陪你看四季烟火，\n也愿看你自在地翱翔蓝天。'},
  tiger:{animal:'tiger',name:'老虎妈妈',color:'#9c7046',soft:'#f5e9d8',tag:'更倾向由自己确定要求，让孩子先执行。',closing:'愿你的坚定，给他方向；\n愿你的温柔，让他敢讲。\n\n有一天，他走得很远，\n仍愿意回头，和你说说心里话。'},
@@ -88,13 +88,76 @@ function contextCopy(answers,context={}){const beliefs=context.belief||[],pains=
  const concern=pains.map(i=>messages[i]).filter(Boolean).join('\n\n');return {ideal,concern,title:'你的观念、困扰与实际做法'};}
 
 function strengths(data,high){const names=high.map(i=>data.dimensions[i].name);if(!names.length)return {title:'你的五个方面，呈现得比较接近。',text:'这次没有特别突出的高低项，可以把目光放回具体情境：哪些做法让彼此更轻松，哪些时刻还需要一起摸索。'};const max=Math.max(...data.dimensions.map(d=>d.score??0));if(max<67)return {title:'先看见已经显现的线索。',text:'“'+names.join('、')+'”是本次相对突出的方面。这里比较的是你自己的五项刻度，不表示已经达到某种标准；具体做法比一个高低标签更值得关注。'};if(high.includes(0)&&high.includes(3))return {title:'你很在意，孩子有没有被听见。',text:'情感回应、沟通与修复是本次突出的方面。孩子难过时，你愿意了解；发生误会后，你也愿意把话说开。你关注的不只是事情有没有完成，也在意关系有没有被照顾。'};const descriptions=['你愿意照顾孩子的感受，为后续沟通留出空间。','你愿意把要求变成具体行动，让约定有后续。','你给孩子参与和尝试的机会，也保留可获得的帮助。','你愿意面对误会和分歧，寻找重新靠近的方式。','你们有主动分享、一起玩或闲聊的日常机会。'];return {title:'你已经拥有，值得珍惜的力量。',text:'本次“'+names.join('、')+'”最为突出。'+high.map(i=>descriptions[i]).join('')};}
+// Narrative layer: interpret self-reported choices without changing scores or type thresholds.
+function fourPageStory(report,answers,context={}){
+ const valid=answers.length===10&&answers.every(a=>Number.isInteger(a)&&a>=0&&a<=3);
+ if(!valid)return {available:false,behavior:{title:'先看你在日常里怎样处理问题',intro:'当前记录缺少逐题回答，暂不能生成具体行为与理念的对照。',faces:report.dimensions.map(d=>({name:d.name,text:d.analysis||'',evidence:''})),summary:'五维图保留本次记录的分数；不据此补写未记录的经历。'},intentions:{overview:'缺少对应回答，不判断你的初心与做法是否一致。',cards:[]},advice:[]};
+ const a=answers,b=Array.isArray(context.belief)?context.belief:[],p=Array.isArray(context.pain)?context.pain:[];
+ const observations=[
+ ['考差哭泣时，先指出学习态度和习惯的问题','考差哭泣时，先安慰，暂不提试卷','先安抚，再一起分析试卷','直接看错题并讲解'],
+ ['先安慰，再联系老师','先按同学闹别扭理解，观察几天','先了解发生的时间、地点和经过','先确认安全与感受，再说明接下来的帮助'],
+ ['要求按原计划上英语班','这次先同意暂停，下次再看意愿','了解原因，协商调整并明确后续安排','把是否上课交给孩子，自己不再介入'],
+ ['收走手机，要求立即写作业','依据已有约定，要求结束游戏','提醒后等孩子自己开始','暂不介入，出现作业问题后再处理'],
+ ['由自己比较后选定兴趣班','共同了解、讨论和协商','限定几个课程，让孩子选择','按孩子的兴趣决定'],
+ ['先让孩子收书包，稍后一起检查','直接替孩子收好','在旁边逐项提醒','由孩子负责，之后不再检查'],
+ ['不再谈误会，让事情过去','明确道歉，并讨论如何面对错误','澄清不是孩子的错，不再谈批评','承认误会，并解释当时着急的原因'],
+ ['用行动缓和气氛，不再谈争吵','等孩子先认错，再恢复交流','主动承认说重了，听感受，再讨论下次怎么办','解释自己着急，再继续提醒任务'],
+ ['孩子每周主动分享几次','孩子很少或没有主动分享','孩子几乎每天主动分享','孩子偶尔主动分享，约每周一次'],
+ ['很少有非学习的共同活动','几乎每天都有非学习的共同时间','偶尔有共同活动，约每周一次','每周有几次非学习的共同活动']
+ ];
+ const evidence=(indices)=>indices.map(i=>`第${String(i+1).padStart(2,'0')}题：${observations[i][a[i]]}。`).join('\n');
+ const emotional=[
+ '面对考试失利，你先关注需要改正的态度和习惯。纠错比较靠前，安抚孩子当下难过的环节没有在这一选择中体现。',
+ '面对考试失利，你先降低成绩带来的压力，让孩子缓过来。这个选择体现了安慰，但没有提供之后是否复盘的信息。',
+ '你把安抚与分析安排了先后：先处理难过，再面对学习问题。感受与任务，在这个场景里都得到了位置。',
+ '你用讲错题提供实际帮助，更快进入解决问题。这能看出你愿意参与，但是否先回应了难过，这一选择没有说明。'
+ ][a[0]];
+ const safety=['同伴问题上，你愿意及时动用老师的帮助，先由成人推动处理。','同伴问题上，你倾向先观察。不过，题目已经提到反复被欺负，需要先确认安全，不能仅按普通摩擦理解。','同伴问题上，你重视先了解事实，再决定怎样处理；是否安慰与确认安全，还需看实际做法。','同伴问题上，你把安全、安慰与后续安排连在了一起，提供的支持比较具体。'][a[1]];
+ const ruleCourse=['课程安排上，你优先维持已经确定的计划。','课程安排上，你先允许暂停，后续是否继续主要等下一次意愿。','课程安排上，你会讨论原因，但也要求调整之后有安排。','课程安排上，你把决定与后续责任交给孩子，自己退出跟进。'][a[2]];
+ const ruleGame=['手机问题上，你直接终止违规行为，执行主要由家长推动。','手机问题上，你以原有约定为依据提出要求。','手机问题上，你会提醒，但没有明确开始时间或之后如何确认。','手机问题上，你倾向等作业问题出现后再介入。'][a[3]];
+ const autonomyChoice=['兴趣选择由你决定，孩子对最终结果的决定空间较少。','兴趣选择通过协商完成，你既提供意见，也让孩子参与。','你先划出可接受的范围，再把范围内的选择交给孩子。','你认可孩子对兴趣的判断，但这一选择本身没有说明后续如何提供支持。'][a[4]];
+ const autonomyTask=['已经会做的生活任务，你让孩子先做，再保留检查。','已经会做的生活任务，你仍会直接接手完成。','你让孩子动手，同时逐项提醒；他练习独立安排步骤的空间较少。','已经会做的生活任务，你交回责任，也不再检查；这与保留适时帮助是两件事。'][a[5]];
+ const repairOne=['误会之后，你倾向恢复日常，而不再说明刚才发生了什么。','误会之后，你愿意明确道歉，让家长也需要承担错误这件事变得可见。','误会之后，你会澄清事实，但不继续谈批评带来的感受。','误会之后，你愿意承认，也会解释自己的原因。'][a[6]];
+ const repairTwo=['争吵之后，你用行动表达靠近，较少把冲突说开。','争吵之后，你等待孩子先认错，重新交流带有条件。','争吵之后，你愿意主动回到对话，也讨论双方下次能怎样做。','争吵之后，你会解释着急，但很快回到任务，孩子感受是否说开还不明确。'][a[7]];
+ const shares=[2,0,3,1][a[8]],time=[0,3,1,2][a[9]];
+ const connection=shares>=2&&time>=2?'你们有比较经常的主动分享与非学习相处。日常里存在交流机会，但这两项频率不能直接代表亲密程度。':shares>=2&&time<2?'孩子主动分享较频繁，而非学习的共同活动较少。听孩子说与一起做事情，是你们连接中表现不同的两个部分。':shares<2&&time>=2?'你们有一定的共同时间，但孩子主动分享较少。相处次数与主动表达没有同步，单靠频率还不能判断原因。':'最近一个月，主动分享和非学习共同活动都比较少。这说明这两类交流机会较少，不能据此认定孩子不信任你或家长不在乎。';
+ const faces=[{name:'情感回应',text:emotional+' '+safety,evidence:evidence([0,1])},{name:'规则与跟进',text:ruleCourse+' '+ruleGame,evidence:evidence([2,3])},{name:'自主支持',text:autonomyChoice+' '+autonomyTask,evidence:evidence([4,5])},{name:'沟通与修复',text:repairOne+' '+repairTwo,evidence:evidence([6,7])},{name:'日常连接',text:connection,evidence:evidence([8,9])}];
+ const behavior={title:'日常里的你',intro:'先看具体做法：你怎样回应感受、落实约定、交还责任，以及在分歧之后重新沟通。',faces,summary:report.highlights?.equal?'五个方面的刻度相同，但具体做法仍有区别。请把分数与各场景的分析一起看。':'本次较突出的方面是'+(report.highlights?.high||[]).map(i=>report.dimensions[i].name).join('、')+'。这表示相关做法在本次回答中体现较多，不是与其他家长的排名。'};
+ const cards=[];const add=(title,belief,reading,indices)=>cards.push({title,belief,reading,evidence:evidence(indices)});
+ if(b.includes(0))add('你相信，犯了错就要记住教训','你比较认同传统管教中用较强约束纠错的做法。这可能与你熟悉的教育方式有关，但本题没有记录你的童年经历。',a[0]===0||a[7]===1?'在失利或冲突的回答中，也出现了先纠正、先要求认错的选择。理念与部分做法有呼应；这些回答仍不能证明实际发生过打骂。':'在具体回答中，你还使用了安慰、了解或其他处理方式。认同一句观念，并不等于每次都照此行动，更不能直接视为发生过打骂。',[0,7]);
+ if(b.includes(1))add('你希望，爱孩子也要有边界','你重视什么可以做、什么不能做，希望孩子理解承诺与责任。',([0,2].includes(a[2])&&[0,1].includes(a[3]))?'课程和手机场景里，你都保留了明确安排。你的规则意识在这两处有实际体现，但坚持要求与是否允许讨论还需要分别看。':([1,3].includes(a[2])&&[2,3].includes(a[3]))?'你认同规则，但在这两处更多选择暂停、提醒后等待，或退出跟进。值得关注的是，规则的想法怎样变成下一步安排，而不是再提出更多要求。':'你在两种场景里的坚持程度不同。规则对你重要，但面对不同事情时，你会采用不同的落实方式，不能简单概括成没有原则。',[2,3]);
+ if(b.includes(2))add('你相信，孩子之间确实有差异','你更倾向用天赋解释学习表现，认为学习结果不能全部归结为努力。',a[0]===2||a[0]===3?'面对考试失利，你仍会分析或讲解具体问题。这说明认同天赋影响的同时，你也没有完全放下方法和帮助。':a[0]===0?'面对考试失利，你又会指出学习态度与习惯。你的回答同时看重先天差异和可改变的行为，不适合归为完全认命或只看努力。':'面对考试失利，你先安慰、暂不谈试卷。当前信息不足以判断你之后是否会寻找方法，不能直接说你已经放弃学习支持。',[0]);
+ if(b.includes(3))add('你想早点准备，让孩子以后从容一点','你比较重视提前学习，希望尽早为孩子创造机会。',a[2]===0?'英语班不想去时，你也优先维持安排。当学习安排与孩子意愿冲突时，继续投入在这次选择中更靠前。':a[2]===2?'英语班不想去时，你愿意了解原因，再讨论调整。你重视准备，也允许实现目标的方法根据实际情况改变。':a[2]===1?'英语班不想去时，你先允许暂停。你认同提前准备，也会给当下意愿让出位置；之后怎样继续，还需要明确安排。':'英语班不想去时，你把决定和后续责任交给孩子。重视早准备与是否持续介入，是你回答中需要分别理解的两件事。',[2]);
+ if(b.includes(4))add('你希望，孩子的成长有自己的声音','你看重兴趣、感受和快乐，不希望教育只剩下完成大人的期待。',a[4]===0?'兴趣班意见不同时，你仍由自己作最终选择。在这个场景里，你的判断比孩子意愿更优先，与你希望尊重兴趣的初心存在值得留意的距离。':a[4]===1?'兴趣班意见不同时，你选择共同了解和协商。尊重意愿在这里有具体体现，也保留了家长提供信息和参与讨论的作用。':a[4]===2?'兴趣班意见不同时，你会提供有限的选择。孩子有参与空间，但范围由你确定，这是一种带边界的选择安排。':'兴趣班意见不同时，你按孩子兴趣决定。这与尊重意愿相呼应，但是否还会提供信息和必要帮助，当前选择没有说明。',[4]);
+ if(b.includes(5))add('你希望，孩子遇到困难能坚持下去','你重视努力与承受挫折，希望孩子不轻易退缩。',a[2]===0?'课程不想去时，你优先要求继续，坚持的理念在这里有体现。不过，这一选择没有说明是否已了解困难的原因。':a[2]===2?'课程不想去时，你会讨论原因和后续安排。坚持在这里不只意味着原样继续，也包括寻找能继续学习的方法。':'课程不想去时，你允许暂停或交由孩子决定。认同坚持与当下如何执行并不完全重合，不能据此说孩子没有毅力。',[2]);
+ let overview=b.length?'你选择的观念表达的是期待；下面结合具体处理，看看它们怎样出现在生活里。':'你没有勾选育儿观念，本页不替你推断初心。前页的行为分析仍然有效。';
+ if(b.includes(3)&&b.includes(4))overview='你既希望孩子提前准备，也希望他快乐成长，两种期待可以同时存在。真正需要看的是：当进度与意愿发生冲突时，你先顾哪一头。';
+ const advice=[],used=new Set();const tip=(key,title,connection,action,closing)=>{if(used.has(key)||advice.length>=3)return;used.add(key);advice.push({key,title,connection,action,closing});};
+ const phone=()=>tip('phone','手机问题：把“到点停止”提前商量好',a[3]===1?'你已经会强调约定，因此下一步不必只是再讲一遍规则。':a[3]===0?'收手机能结束眼前的游戏，但没有替代之后每一次怎样结束的安排。':'你的处理更多依靠提醒或等待，可以补上明确的开始时间与确认方式。','选一个没有正在争执的时间，和孩子确定可用时段、结束提醒和超时后的处理。到点时按同一办法执行，之后再一起看是否需要调整。','让规则减少临时争论，而不是成为另一场争论。');
+ const study=()=>tip('study','学习问题：把“达到期待”拆成一个具体目标',a[0]===2?'你已经愿意先安抚再分析，可以继续把分析推进到一个可操作的小目标。':a[0]===0?'你会指出态度与习惯，但“认真一点”还需要转成孩子知道怎样做的步骤。':a[0]===1?'你愿意先减轻情绪压力，之后还可以补上一小段具体复盘。':'你已经在讲解错题，可以再让孩子解释思路，确认难点在哪里。','先选一类错题或一个习惯，让孩子说说哪里卡住。一起约定一个近期能检查的小目标，例如每次先独立做，再解释一道题的思路，而不是一次要求总分提高多少。','目标具体一点，帮助才能落到他真正需要的地方。');
+ const close=()=>tip('connection','想更亲近：先分清缺的是机会，还是被理解的感觉',shares>=2?'孩子已经会较经常地分享。你仍感到不亲近，不能只把问题归为聊得太少。':'孩子主动分享较少，但这不能直接说明不信任你。可以先创造轻松开口的机会。',shares>=2?'下次孩子讲一件事时，先听完整，再问他希望你听一听还是一起想办法。留意你们是否很快从分享转成了检查、纠正或建议。':'选一段不督促学习的小时间，一起散步或做件小事。先分享你自己的一件趣事，孩子想说时听完，不要求他必须汇报学校发生的一切。','亲近不只在聊了多少，也在彼此能不能自在地表达。');
+ const conflict=()=>tip('repair','冲突之后：把任务要求与沟通方式分开',a[7]===2?'你已经会主动承认说重了、听孩子的感受，下一步可以让下次的约定更具体。':a[7]===1?'等孩子先认错再交流，可能让双方都停在谁先低头。家长先谈自己的表达，并不等于取消任务要求。':'你会解释或用行动缓和，但孩子对争吵的感受还未必有机会说清。','冷静后，先说清自己哪种表达需要调整，听他对这件事的理解，再分别确定任务如何完成、下次谁先暂停、什么时候回来谈。','承认表达有问题，不会让合理要求失去分量。');
+ const independent=()=>tip('autonomy','拿不准管多少：按“会不会做”逐步交还责任',a[5]===0?'你已经让孩子先做、再检查，可以根据实际完成情况逐步减少检查。':a[5]===1||a[5]===2?'题目里的孩子已经会收书包，家长接手或逐项提醒会减少他自己安排的练习。':'你已经把任务交给孩子，也可以保留需要时获得帮助的渠道。','从一件已经会做、后果可承担的小事开始，约定由孩子完成。最初保留一次检查；稳定完成后减少检查。遇到不会的部分先教方法，再交回去做。','自主支持，是责任逐步交还，帮助仍然可获得。');
+ for(const i of p){if(i===0)study();if(i===1)phone();if(i===2)close();if(i===3)conflict();if(i===4)independent();if(i===6)tip('other','关于你补充的困扰','你补充的问题需要结合发生场景、频率和已有尝试来判断；本问卷不能只凭一段文字确定原因。','先记录最近一次具体发生了什么、你怎样处理、孩子如何回应。将问题缩小到一个能观察的环节，再参考与它相关的日常建议。','暂时没有足够证据的地方，先不急着归因。');}
+ if(b.includes(0))tip('discipline','让孩子记住怎样改，而不只是害怕后果','你认同较强惩罚能让孩子长教训，但这不等于实际发生过打骂。需要留意的是，停止行为与学会替代做法并不相同。','孩子犯错时，先停止有伤害的行为，再说清错在哪里、怎样补救、下次能怎样做。避免体罚、羞辱和威胁，用明确要求与一致跟进替代。','对行为有要求，对孩子保留尊重。');
+ if(advice.length<3&&!p.includes(5)){
+  if(a[1]===1)tip('safety','反复被欺负时，先确认安全','题目已经提到反复被欺负，仅观察几天可能漏掉孩子需要的及时帮助。','先确认是否受伤、是否仍有威胁，了解时间、地点和经过。对持续伤害及时与学校沟通，并让孩子知道接下来谁会帮助他。','独立处理的练习，应建立在安全与可获得的支持上。');
+  if(a[6]===0||a[7]===1)conflict();
+  if(a[5]===1||a[5]===2||a[2]===3)independent();
+  if([2,3].includes(a[3]))phone();
+  if(a[4]===0&&b.includes(4))tip('choice','把尊重兴趣落实到一次真实选择','你认同尊重兴趣，但在意见不同时仍由自己选定。可以从这处具体距离开始调整。','先请孩子说明为什么想学，再一起了解课程、时间与费用。家长明确不可突破的条件，在可行范围内让孩子参与最终选择，并约好试学后的复盘。','给出真实的参与机会，比只说尊重更能被感受到。');
+ }
+ if(!advice.length)tip('keep','先保留已经有效的做法',p.includes(5)?'你对目前的相处比较满意，不需要为了报告而制造一个问题。':'本次回答没有呈现需要优先处理的明确问题，可以先观察已有做法是否适合你们。','选一个你想继续保持的做法，例如冲突后重新沟通，或让孩子先完成生活任务。观察孩子能否参与、安排能否持续，再决定是否调整。','成长可以是继续做好，也可以是按需要改变。');
+ return {available:true,behavior,intentions:{overview,cards},advice};
+}
+
 function enrichReport(report,input={}){
  if(report.edition===REPORT_EDITION)return report;
  const answers=input.answers||[],profile=input.profile||{},context=input.context||{},key=report.key||'mixed',theme=reportTheme(key),identity=identityExplanation(report,answers),observed=answers.length===10?contextCopy(answers,context):{ideal:'',concern:'',title:'你的观念与实际做法'},highlights=scoreHighlights(report.dimensions);
  const dimensions=report.dimensions.map((d,i)=>{const level=d.score===null?null:d.score>=67?2:d.score<=33?0:1;let copy=level===null?['这一项还需要更多信息。','完成相关问题后，再一起看看。','']:DIMENSIONS[i][level];copy=[...copy];if(i===1&&level===0&&answers.length===10&&(answers[2]===1||answers[3]===2)){copy[0]='你会提醒或先让一步，之后的跟进相对少。';copy[1]='在英语班或手机作业的情境里，你选择了先同意暂停，或提醒后等待孩子自己行动。题目不能判断你是心软还是疲惫，只能反映这次选择的处理方式。';}if(i===1&&level!==null&&level<2&&ageTip(profile))copy[2]+=' '+ageTip(profile);return {...d,title:copy[0],analysis:copy[1],reminder:copy[2]};});
  const strongest=strengths(report,highlights.high),lowNames=highlights.low.map(i=>report.dimensions[i].name),highNames=highlights.high.map(i=>report.dimensions[i].name),summary=highlights.equal?'五项刻度相同，没有最高或最低项。请结合各项对应的具体选择理解，不需要给自己算一个总分。':highlights.min>=67?'五个方面都呈现了较多相关做法。“'+lowNames.join('、')+'”只是相对较少，不代表做得不好。':'本次“'+highNames.join('、')+'”相关做法体现得较多。“'+lowNames.join('、')+'”相对较少，可以结合这一项的具体提醒，选一件日常小事尝试调整。';
  const isAnimal=['elephant','tiger','hen','cat','varied','mixed'].includes(key),p={...report.profile,name:isAnimal?theme.name:report.profile.name,tag:isAnimal?theme.tag:report.profile.tag,closing:theme.closing,body:identity.definition,edge:''};
- return {...report,edition:REPORT_EDITION,profile:p,theme,identity,dimensions,highlights,strengths:strongest,portrait:{title:observed.title,paragraphs:[observed.ideal,observed.concern].filter(Boolean),takeaway:''},summary,reference:{kind:'within-person',text:'分数是本次回答的呈现程度；目前不展示人群排名。'}};
+ return {...report,story:fourPageStory({...report,highlights},answers,context),edition:REPORT_EDITION,profile:p,theme,identity,dimensions,highlights,strengths:strongest,portrait:{title:observed.title,paragraphs:[observed.ideal,observed.concern].filter(Boolean),takeaway:''},summary,reference:{kind:'within-person',text:'分数是本次回答的呈现程度；目前不展示人群排名。'}};
 }
 
 globalThis.MamaReport={REPORT_EDITION,THEMES,reportTheme,scoreHighlights,enrichReport};
