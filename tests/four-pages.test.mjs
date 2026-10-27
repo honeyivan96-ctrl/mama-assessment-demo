@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import {buildSubmission,calculateReport,QUESTION_VERSION,CONSENT_VERSION,refreshStoredReport} from '../supabase/functions/mama-v2/domain.mjs';
+import {buildSubmission,calculateReport,QUESTION_VERSION,CONSENT_VERSION,refreshStoredReport} from '../supabase/functions/mama-v2/domain-legacy.mjs';
 const base={version:QUESTION_VERSION,consent:true,consentVersion:CONSENT_VERSION,answers:[2,3,2,1,1,0,1,2,2,1],profile:{role:0,age:'',sex:0,childAge:'8岁'},context:{belief:[2,3,4],pain:[1,3]}};
 const make=(answers=base.answers,context=base.context)=>buildSubmission({...base,answers,context}).report;
 const r=make();assert.equal(r.edition,'four-pages-20261026');assert(r.story.available);assert.equal(r.story.behavior.faces.length,5);assert.equal(r.story.intentions.cards.length,3);assert(r.story.intentions.overview.includes('两种期待可以同时存在'));assert(r.story.intentions.cards[1].reading.includes('调整'));assert(r.story.intentions.cards[2].reading.includes('协商'));assert.equal(r.story.advice[0].key,'phone');assert(r.story.advice[0].connection.includes('已经'));assert.equal(r.story.advice[1].key,'repair');assert.equal(new Set(r.story.advice.map(c=>c.key)).size,r.story.advice.length);
