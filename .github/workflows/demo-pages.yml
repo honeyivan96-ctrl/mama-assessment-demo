@@ -34,6 +34,7 @@ jobs:
           node tests/clear-report.test.mjs
           node tests/share-copy.test.mjs
           node tests/fifteen.test.mjs
+          node tests/refinement.test.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
