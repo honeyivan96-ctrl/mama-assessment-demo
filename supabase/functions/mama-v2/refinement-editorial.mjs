@@ -68,6 +68,15 @@ export function refineReport(report,answers){
  const valid=report.dimensions.filter(d=>d.score!==null),high=valid.length?Math.max(...valid.map(d=>d.score)):null,low=valid.length?Math.min(...valid.map(d=>d.score)):null;
  report.interactionOverview={high:high===low?[]:valid.filter(d=>d.score===high).map(d=>d.name),low:high===low?[]:valid.filter(d=>d.score===low).map(d=>d.name),title:high===null?'先看已经提供的互动信息':high===low?'五类互动的表现比较接近':'把已经做到的留住，再补上一小步',text:high===null?'这些互动尚不足以形成五维比较，不用着急给自己下结论。':high===low?'本次可比较的互动得分相同。比起寻找一个短板，更值得看看每项在不同场景中的具体做法。':`本次，“${valid.filter(d=>d.score===high).map(d=>d.name).join('、')}”的相关做法体现得相对更多；“${valid.filter(d=>d.score===low).map(d=>d.name).join('、')}”相对少一些。保留你已经做到的，再从下方建议中选一个日常动作开始，不必一次改变所有事情。`};
  if(report.interactionOverview.high.includes('行为规范与管教')&&report.interactionOverview.low.includes('共同参与')){report.interactionOverview.title='你会认真跟进，也可以多一点并肩参与';report.interactionOverview.text='你比较擅长让孩子知道事情需要完成，也会确认结果。相较之下，和孩子一起动手、一起坚持的机会少一些。在提出要求之外，让他看见你也在行动，陪伴就不只是提醒和检查。';}
+
+ report.sceneTheory="本轮测评沿用“回应与要求”两个角度，分别观察你在孩子的社会交往、亲子相处和学习教育中，怎样回应孩子的需要、把握规则与责任。";
+ report.sceneLead=complete?(report.consistent?'从本轮回答看，你在三类场景中的回应与要求比较一致。':'从本轮回答看，你会随事情调整回应和要求。下面分别看看这种变化表现在哪里。'):'从本轮回答看，你对孩子的回应和要求并不总是采用同一种方式。下面结合具体情境来看。';
+ const parentTips={bear:'继续保留倾听与跟进的平衡。孩子遇到困难时，先提供必要帮助，再把能够承担的部分交还给他。',tiger:'保留明确要求，同时给孩子解释困难的机会。先听他说完，再说明底线和可商量的部分，比只要求服从更有助于理解规则。',hen:'保留体谅，也让约定有后续。选择一项适龄责任，和孩子说好完成时间；遇到困难先教方法，尽量不直接代劳。',cat:'从一件具体小事增加回应和跟进。每天留一点能专心听孩子说话的时间，再共同落实一项简单约定。',mixed15:'先区分可商量的偏好与需要坚持的责任。尽量让相似的事情有可预期的处理方式，让孩子知道你的要求和支持。'};
+ report.parentTip=parentTips[report.key]||'从已经有实际经历的情境开始观察，先找出一个可以调整的具体动作。';
+ for(const s of report.scenes){if(s.key==='mixed15'){s.reading='面对孩子的需要和规则，你没有始终采用同一种处理方式：有时愿意倾听或让步，有时更坚持要求。可以进一步留意，哪些要求需要稳定坚持，哪些安排可以根据孩子的实际需要商量。';}s.recommendation=parentTips[s.key]||'先从一次真实经历看起：孩子需要什么，你提出了什么要求，最后有没有落实。';}
+ const strengths=['你较常留意孩子的难过，并提供安慰','你愿意听取想法，给孩子参与商量的机会','你对孩子的行为规范和责任有明确要求，也愿意跟进落实','你比较愿意提供示范和提示，帮助孩子学会方法','你比较愿意和孩子一起行动，让他承担一份实际角色'];
+ const gaps=['对孩子遇到难处时的情绪回应相对少，需要先帮助他安定下来','让双方理由被听见、共同商量安排的机会还可以增加','规则提出之后的持续跟进还可以更明确','帮助孩子跨过困难的具体方法支持还可以增加','自己也投入其中、与孩子并肩做事的机会还可以增加'];
+ const o=report.interactionOverview;if(o.high.length){const hi=report.dimensions.filter(d=>o.high.includes(d.name)),lo=report.dimensions.filter(d=>o.low.includes(d.name));o.title='你的优势，以及下一步值得留意的地方';o.text=hi.map(d=>strengths[d.index]).join('；')+'。相比之下，'+lo.map(d=>gaps[d.index]).join('；')+'。'+(lo.every(d=>d.mean>=2)?'这些是本次表现的相对差异，并不表示你没有做到。':'可以先从下方的一条建议开始，逐步把理解、方法和规则连接起来。');}
  report.edition='refined-20261027-r2';
  return report;
 }
