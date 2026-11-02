@@ -43,12 +43,12 @@ const sceneDescriptions={
  bear:['面对孩子与同学相处的问题，你愿意了解经过，也会帮助他表达想法、承担责任。你在意孩子的感受，也希望答应别人的事得到落实。','平时相处时，你愿意听取孩子的想法，也会坚持适龄的分工和约定。你在尝试把体谅与责任放在一起。','面对作业、兴趣班和学习安排，你愿意听孩子解释，也会提出明确要求，关注事情能否落实。'],
  tiger:['面对同学社会交往中的问题，你更倾向先明确该怎么做，并确认孩子照着执行。孩子解释和自己尝试的空间相对少一些。','日常相处时，你更重视孩子按安排完成事情。比起调整原计划，你往往更希望他先配合要求。','面对作业、成绩和学习安排，你更看重任务能不能按要求完成。孩子有不同想法时，你比较容易先坚持原来的要求，商量的空间相对少一些。'],
  hen:['面对孩子的同学交往，你比较愿意体谅、回应他的需要；涉及应承担的责任时，提醒和后续跟进相对少一些。','平时相处时，你更愿意照顾孩子的心情。他想玩、想换个安排，你常常愿意让一步；说好的分工，有时也会由你接手。','面对学习安排，你比较愿意顺着孩子的兴趣和感受；任务的要求、开始时间和后续确认，相对没有那么明确。'],
- cat:['在这些同学交往情境中，你较常让孩子自行处理，直接回应与后续跟进都比较少。单凭这些选择，不能判断你不关心孩子。','日常相处中，你比较少继续追问、协商或跟进安排。孩子自己应对的空间较多，但可获得的具体支持也相对少一些。','在这些学习情境中，你较少提供具体回应和持续跟进。可以先从一项你和孩子都能坚持的小安排开始。']
+ cat:['在孩子与同学交往的事情上，你的处理比较佛系，更倾向让孩子自己应对，主动了解和后续跟进相对少一些。','日常相处中，你比较少继续追问、协商或跟进安排。孩子自己应对的空间较多，但可获得的具体支持也相对少一些。','在这些学习情境中，你较少提供具体回应和持续跟进。可以先从一项你和孩子都能坚持的小安排开始。']
 };
 function refineReport(report,answers){
  const t=report.theme,style=presentationStyle(report.key),name=presentationName(report.key);
  if(name){report.profile.name=name;t.name=name;report.profile.style=style;t.style=style;}
- const definitions={bear:'总体来说，您是个愿意了解孩子，也期待他承担适龄责任，并关注事情是否落实的妈妈。',tiger:'总体来说，您是个重视要求和执行的妈妈，希望孩子按约定把事情做好；相比之下，听取孩子的感受和理由会少一些。',hen:'总体来说，您是个愿意体谅孩子、回应他需要的妈妈；面对责任和约定，容易让步，持续跟进相对少一些。',cat:'总体来说，在这些情境中，您更常让孩子自行处理，主动回应和持续跟进相对少一些。这不等于您不爱孩子。'};
+ const definitions={bear:'总体来说，您是个愿意了解孩子，也期待他承担适龄责任，并关注事情是否落实的妈妈。',tiger:'总体来说，您是个重视要求和执行的妈妈，希望孩子按约定把事情做好；相比之下，听取孩子的感受和理由会少一些。',hen:'总体来说，您是个愿意体谅孩子、回应他需要的妈妈；面对责任和约定，容易让步，持续跟进相对少一些。',cat:'总体来说，在这些情境中，您更常让孩子自行处理，主动回应和持续跟进相对少一些，属于有点佛系的妈妈。'};
  report.profile.body=definitions[report.key]||report.profile.body;
  report.scenes.forEach(s=>{s.displayStyle=presentationStyle(s.key)||s.type;s.displayName=presentationName(s.key)||'';s.reading=sceneDescriptions[s.key]?.[s.index]||s.reading;});
  const complete=report.scenes.every(s=>s.eligible&&sceneDescriptions[s.key]);
@@ -237,7 +237,7 @@ const TYPES15={
  bear:{name:'棕熊妈妈',style:'权威型',color:'#56796e',soft:'#e4eee6',animal:'bear',tag:'理解孩子，也认真守住约定。',definition:'权威型教养同时体现较多回应与明确要求：愿意了解孩子，也期待他承担适龄责任，并关注事情是否落实。',closing:'风雨来时，为你撑伞；\n平淡日常，陪你三餐；\n低谷迷茫，予你心安；\n岁月漫漫，与你相伴。\n\n孩子，妈妈愿陪你看四季烟火，\n也愿看你自在地翱翔蓝天。'},
  tiger:{name:'老虎妈妈',style:'专制型',color:'#9c7046',soft:'#f5e9d8',animal:'tiger',tag:'要求比较明确，理解还可以多留一步。',definition:'专制型倾向表现为要求与落实较多，而了解和回应孩子感受、观点的做法相对较少。这里描述本次相处方式，不是在评价你的整个人格。',closing:'愿你的坚定，给他方向；\n愿你的温柔，让他敢讲。\n\n有一天，他走得很远，\n仍愿意回头，和你说说心里话。'},
  hen:{name:'母鸡妈妈',style:'保护型',color:'#b37b70',soft:'#f6e7df',animal:'hen',tag:'你很在意感受，也可以让约定更有后续。',definition:'宽容／放任型倾向表现为较多关心和回应，而明确要求、让孩子承担责任与持续跟进的做法相对较少。',closing:'爱是风雨里的一把伞，\n也是出发前的一次放手。\n\n愿你陪他走过眼前的路，\n也相信，他会走出自己的远方。'},
- cat:{name:'猫咪妈妈',style:'佛系型',color:'#7c7796',soft:'#ece9f4',animal:'cat',tag:'多一点回应，多一个有后续的约定。',definition:'低投入型表示本次回答中，直接回应与明确跟进体现得都较少。问卷不能据此判断你不爱孩子，也不能说明日常照护的全部。',closing:'给他探索世界的自由，\n也给他回头找你的安心。\n\n愿他奔向远方时，心里始终知道：\n妈妈在，家就在。'},
+ cat:{name:'猫咪妈妈',style:'佛系型',color:'#7c7796',soft:'#ece9f4',animal:'cat',tag:'多一点回应，多一个有后续的约定。',definition:'佛系型表示本次回答中，你更倾向让孩子自行处理，直接回应与明确跟进相对较少。',closing:'给他探索世界的自由，\n也给他回头找你的安心。\n\n愿他奔向远方时，心里始终知道：\n妈妈在，家就在。'},
  mixed15:{name:'本次类型交界',style:'类型交界',color:'#6a786a',soft:'#e9eddf',animal:'panda',tag:'先看具体做法，不急着用一个类型概括。',definition:'回应性或要求性恰好落在本版试测分界，暂不强行确定唯一动物类型。可以继续查看不同场景和具体互动。',closing:'一边爱着，一边学习；\n允许自己，也有不同的样子。\n\n愿你陪孩子慢慢长大，\n也给自己被理解的余地。'},
  insufficient15:{name:'本次信息不足',style:'信息不足',color:'#6a786a',soft:'#e9eddf',animal:'panda',tag:'有些情境尚未遇到，保留真实比填满更重要。',definition:'有效回答尚不足以支持总体分型。已完成的互动观察仍可阅读，不把“未遇到”当作低分。',closing:'不必急着给自己一个答案，\n从看见一件真实的小事开始。\n\n愿你与孩子，在日常里慢慢靠近。'}
 };
@@ -252,7 +252,7 @@ function score15(answers){
  const interactions=DOMAINS15.map((name,k)=>{const points=scenes.map((s,i)=>({scene:s.name,index:i,mean:entries[i*5+k]?.[2]??null,score:percent(entries[i*5+k]?.[2]??null)})),valid=points.filter(p=>p.mean!==null),m=valid.length>=2?mean(valid.map(p=>p.mean)):null;return {name,index:k,mean:m,score:percent(m),count:valid.length,points,varied:valid.length>=2&&Math.max(...valid.map(p=>p.mean))-Math.min(...valid.map(p=>p.mean))>=2};});
  return {R,D,r:percent(R),d:percent(D),rCount,dCount,key,eligible,border:eligible&&(Math.abs(R-1.5)<=.25||Math.abs(D-1.5)<=.25),scenes,interactions};
 }
-const sceneRead=s=>!s.eligible?'有效信息不足，暂不确定本场景类型。':s.key==='mixed15'?'本场景处于类型交界，结合具体选择理解。':s.key==='bear'?'你会回应孩子，也保留明确要求与后续落实。':s.key==='tiger'?'要求和任务落实更靠前，倾听与回应体现得较少。':s.key==='hen'?'照顾意愿与感受较多，对责任和约定的跟进相对少。':'直接回应与后续跟进都较少，不能据此判断关爱程度。';
+const sceneRead=s=>!s.eligible?'有效信息不足，暂不确定本场景类型。':s.key==='mixed15'?'本场景处于类型交界，结合具体选择理解。':s.key==='bear'?'你会回应孩子，也保留明确要求与后续落实。':s.key==='tiger'?'要求和任务落实更靠前，倾听与回应体现得较少。':s.key==='hen'?'照顾意愿与感受较多，对责任和约定的跟进相对少。':'处理方式比较佛系，更倾向让孩子自己应对，主动回应和跟进相对较少。';
 const domainCopy=[
  ['孩子表达难过时，你更常了解和承接他的感受。','安慰有时会出现，也有些情境更快进入处理问题。','直接安慰与了解难过的做法较少，更容易进入纠错或让他自己面对。'],
  ['你愿意听取理由，让孩子的意见有参与安排的机会。','你提供一些表达或选择机会，但不同事情的商量空间有区别。','决定更多由家长作出，孩子解释和影响安排的机会较少。'],
