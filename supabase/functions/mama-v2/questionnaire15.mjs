@@ -161,7 +161,7 @@ export const TYPES15={
 };
 const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
 const percent=x=>x===null?null:Math.round(x/3*100);
-function classify15(r,d,eligible){if(!eligible||r===null||d===null)return 'insufficient15';if(Math.abs(r-1.5)<1e-9||Math.abs(d-1.5)<1e-9)return 'mixed15';return r>1.5?(d>1.5?'bear':'hen'):(d>1.5?'tiger':'cat');}
+function classify15(r,d,eligible){if(!eligible||r===null||d===null)return 'insufficient15';const responsive=r>1.5+1e-9,demanding=d>1.5+1e-9;return responsive?(demanding?'bear':'hen'):(demanding?'tiger':'cat');}
 export function score15(answers){
  if(!Array.isArray(answers)||answers.length!==15||answers.some(a=>!Number.isInteger(a)||a<0||a>4))throw Error('请完成全部15道题；未遇到可选择“无法判断”。');
  const entries=answers.map((a,i)=>a===4?null:WEIGHTS15[i][a]);
@@ -200,5 +200,5 @@ export function report15(answers,{profile={},context={}}={},created=Date.now()){
  for(const i of pains){if(i===0)learning();if(i===1)phone();if(i===2)relation();if(i===3)boundary();if(i===4)tip('independence','根据会不会做，调整介入程度','已经会做、后果可承担的事，让孩子先负责；还不会时先教方法，再逐步减少帮助。接手完成与帮助学会，需要分别看。');if(i===6)tip('other','先把补充困扰缩小到一个具体片段','自由描述不足以确定原因。可以记录最近一次发生了什么、你怎样处理、孩子如何回应，再对照相关互动建议选择一个可调整的环节。');}
  if(!pains.includes(5)&&advice.length<3){const low=dimensions.filter(d=>d.mean!==null&&d.mean<1.5).sort((a,b)=>a.mean-b.mean)[0];if(low){if(low.index===0)relation();if(low.index===1||low.index===2)boundary();if(low.index===3)learning();if(low.index===4)tip('participation','让孩子在共同做事中有一个实际角色','选择一件他能够完成的小事，说明负责哪一部分，和家人一起做。遇到不会的地方提供示范，避免一着急就全部代劳。');}}
  if(!advice.length)tip('keep','先保留已经有效的做法','你暂时没有明显困惑，可以继续保持已有的回应和安排。选择一项你愿意观察的互动，看孩子是否有参与机会、约定能否持续，再按需要调整。');
- return refineReport({schema:'mama15',version:VERSION15,edition:EDITION15,key:score.key,created,profile:{name:t.name,style:t.style,tag:t.tag,body:t.definition,quote:t.tag,edge:'',closing:t.closing},theme:{...t},axes:{R:score.R,D:score.D,r:score.r,d:score.d,rCount:score.rCount,dCount:score.dCount,eligible:score.eligible,border:score.border},scenes:score.scenes.map(s=>({...s,reading:sceneRead(s)})),consistent,sceneSummary,dimensions,highlights,intentions,advice,identity:{definition:t.definition,evidence,symbolism:'动物名称为本产品的趣味表达，不是研究原有分类；不代表固定人格或孩子的真实感受。'},summary:axis+(score.eligible?'类型描述本次自述的主要育儿倾向。':''),sources:SOURCES15,reference:{text:'分数与1.5分界为本版试测规则，非标准化诊断、常模或人群排名。'}},answers);
+ return refineReport({classificationVersion:'four-types-20261102',schema:'mama15',version:VERSION15,edition:EDITION15,key:score.key,created,profile:{name:t.name,style:t.style,tag:t.tag,body:t.definition,quote:t.tag,edge:'',closing:t.closing},theme:{...t},axes:{R:score.R,D:score.D,r:score.r,d:score.d,rCount:score.rCount,dCount:score.dCount,eligible:score.eligible,border:score.border},scenes:score.scenes.map(s=>({...s,reading:sceneRead(s)})),consistent,sceneSummary,dimensions,highlights,intentions,advice,identity:{definition:t.definition,evidence,symbolism:'动物名称为本产品的趣味表达，不是研究原有分类；不代表固定人格或孩子的真实感受。'},summary:axis+(score.eligible?'类型描述本次自述的主要育儿倾向。':''),sources:SOURCES15,reference:{text:'本版四类规则：原始均分超过1.5归入较多，等于或低于1.5归入较少。按未四舍五入的原始分分类；分界为产品试测规则，不是标准化诊断或人群排名。'}},answers);
 }
