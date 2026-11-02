@@ -6,3 +6,5 @@
 .quiz-instructions,.form-view .notice,.options+.notice{color:#b4473f!important}.quiz-instructions{font-size:13px}.form-view .notice{font-size:14px;line-height:1.8}
 
 .report-framework{border-bottom:1px solid #dedcd1;padding-bottom:22px;margin-bottom:30px}.framework-type{font-size:13px;line-height:1.9;margin:9px 0;color:#65705f}.framework-note{font-size:10px;line-height:1.8;color:#929583}.scene-advice{font-size:13px;line-height:1.9;background:#e8eddf77;padding:14px;color:#63765c}
+
+.interaction-explanation{color:#b0675b!important;white-space:pre-line;font-size:13px;line-height:1.95}.scene-comparison{margin:20px 0 22px;padding:16px 0;border-top:1px solid #e4e5d9;border-bottom:1px solid #e4e5d9}.scene-score-row{display:grid;grid-template-columns:66px minmax(0,1fr) 48px;align-items:center;gap:10px;margin:11px 0;font-size:12px;color:#75816b}.scene-score-track{height:7px;background:#e3e7dc;border-radius:4px;overflow:hidden}.scene-score-fill{display:block;height:100%;border-radius:4px}.scene-fill-0{background:#92afa5}.scene-fill-1{background:#c2ad8c}.scene-fill-2{background:#aba0bf}.scene-score-number{text-align:right;white-space:nowrap}

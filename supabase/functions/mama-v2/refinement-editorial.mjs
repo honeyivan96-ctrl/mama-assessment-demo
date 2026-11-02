@@ -54,7 +54,7 @@ export function refineReport(report,answers){
  const complete=report.scenes.every(s=>s.eligible&&sceneDescriptions[s.key]);
  const phrases={bear:['社会交往中愿意引导，也认真跟进','日常相处时体谅与责任并重','学习上既听想法，也提出要求'],tiger:['社会交往中更重视要求和执行','日常相处时更希望孩子配合','学习上更看重按要求完成'],hen:['社会交往中比较愿意体谅孩子','日常相处时更愿意让一步','学习上更愿意顺着孩子'],cat:['社会交往中较常让孩子自行应对','日常相处时具体跟进较少','学习上具体支持与跟进较少']};
  report.sceneLead=complete?(report.consistent?`总体上，你是${style}的${name}。这份特点在同学交往、亲子相处和学习教育中表现得比较一致。`:`总体上，你是${name?style+'的'+name:'类型交界的妈妈'}。但遇到不同的事情，你的侧重点也会改变：${report.scenes.map(s=>phrases[s.key][s.index]).join('；')}。`):'有些情境尚未提供足够信息。下面先看已经能够观察到的表现，不用缺少的回答替你下结论。';
- report.sceneClosing=complete?(report.consistent?'不同情境中，你的侧重点比较稳定。接下来可以看看：同一种相处方式，在哪些具体互动里发挥得更好，又有哪些地方需要调整。':'你的相处方式会随着事情改变。比起只用一个名称概括自己，留意哪些时候更愿意倾听、哪些时候更坚持要求，会更了解日常里的自己。'):'未遇到的情境可以保留空白。真实作答，比凑出一个完整类型更重要。';
+ report.sceneClosing=complete?(report.consistent?'不同情境中，你的侧重点比较稳定。接下来可以看看：同一种相处方式，在哪些具体互动里发挥得更好，又有哪些地方需要调整。':'你的相处方式会随着事情改变。比起只用一个名称概括自己，留意哪些时候更愿意倾听、哪些时候更坚持要求，会更了解日常里的自己。'):'';
  report.dimensions=report.dimensions.map((d,i)=>{
   const valid=d.points.filter(p=>p.mean!==null),sum=valid.reduce((n,p)=>n+p.mean,0),ready=d.mean!==null;
   const readings=valid.map(p=>`${shortScenes[p.index]}，${choices[p.index*5+i][answers[p.index*5+i]]}。`);
@@ -63,7 +63,7 @@ export function refineReport(report,answers){
   if(i===4&&ready&&d.mean<2)role='可以补上的：和孩子真正一起做';
   const maxPoint=valid.length?Math.max(...valid.map(p=>p.mean)):null,minPoint=valid.length?Math.min(...valid.map(p=>p.mean)):null;
   const contrast=ready&&maxPoint!==minPoint?` 这种做法在${valid.filter(p=>p.mean===maxPoint).map(p=>p.scene).join('、')}中体现得更多，在${valid.filter(p=>p.mean===minPoint).map(p=>p.scene).join('、')}中相对少一些。`:'';
-  return {...d,earned:ready?sum:null,max:valid.length*3,theory:meanings[i],role,reading:ready?interpretation[i][d.mean>=2?0:d.mean>=1?1:2]+contrast:'目前只有少量情境可供观察，暂不概括整体表现。',evidence:readings,suggestion:ready?tips[i]:'这类互动目前少于两道有效回答，可以先观察一次类似的日常，再看是否需要调整。'};
+  return {...d,earned:ready?sum:null,max:valid.length*3,theory:meanings[i],role,reading:ready?interpretation[i][d.mean>=2?0:d.mean>=1?1:2]:'目前只有少量情境可供观察，暂不概括整体表现。',evidence:readings,suggestion:ready?tips[i]:'这类互动目前少于两道有效回答，可以先观察一次类似的日常，再看是否需要调整。'};
  });
  const valid=report.dimensions.filter(d=>d.score!==null),high=valid.length?Math.max(...valid.map(d=>d.score)):null,low=valid.length?Math.min(...valid.map(d=>d.score)):null;
  report.interactionOverview={high:high===low?[]:valid.filter(d=>d.score===high).map(d=>d.name),low:high===low?[]:valid.filter(d=>d.score===low).map(d=>d.name),title:high===null?'先看已经提供的互动信息':high===low?'五类互动的表现比较接近':'把已经做到的留住，再补上一小步',text:high===null?'这些互动尚不足以形成五维比较，不用着急给自己下结论。':high===low?'本次可比较的互动得分相同。比起寻找一个短板，更值得看看每项在不同场景中的具体做法。':`本次，“${valid.filter(d=>d.score===high).map(d=>d.name).join('、')}”的相关做法体现得相对更多；“${valid.filter(d=>d.score===low).map(d=>d.name).join('、')}”相对少一些。保留你已经做到的，再从下方建议中选一个日常动作开始，不必一次改变所有事情。`};
