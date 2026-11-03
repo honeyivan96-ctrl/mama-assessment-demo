@@ -46,7 +46,7 @@ export function makeAdminOperations(env,store,utils,now=()=>Date.now()){
   const input=await readBody(req),key=input.requestKey;if(typeof key!=='string'||!/^[A-Za-z0-9_-]{16,100}$/.test(key))fail('请求标识无效，请刷新后重试。');
   const cleanIntent={...input};delete cleanIntent.password;delete cleanIntent.currentPassword;delete cleanIntent.newPassword;
   if(path==='admin/security/password'){
-   await credentialCheck(req,input.currentPassword,cred);if(typeof input.newPassword!=='string'||input.newPassword.length<16||input.newPassword.length>128||input.newPassword.trim().length<16)fail('新密码长度需为16—128位。');if(input.newPassword===input.currentPassword)fail('新密码不能与当前密码相同。');const data=await mutate(hash,'password','account',{expected:cred.version,verifier:await passwordVerifier(input.newPassword)},key,{action:'password',credentialVersion:cred.version,passwordProof:await keyedHash(env.APP_SECRET,input.newPassword)});return{data};
+   await credentialCheck(req,input.currentPassword,cred);if(typeof input.newPassword!=='string'||input.newPassword.length<10||input.newPassword.length>128||input.newPassword.trim().length<10)fail('新密码长度需为10—128位。');if(input.newPassword===input.currentPassword)fail('新密码不能与当前密码相同。');const data=await mutate(hash,'password','account',{expected:cred.version,verifier:await passwordVerifier(input.newPassword)},key,{action:'password',credentialVersion:cred.version,passwordProof:await keyedHash(env.APP_SECRET,input.newPassword)});return{data};
   }
   if(path==='admin/security/logout-all')return{data:await mutate(hash,'logout_all','account',{},key,cleanIntent)};
   if(path==='admin/codes'){
