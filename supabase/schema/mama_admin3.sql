@@ -12,6 +12,7 @@ alter table public.mama_codes add column if not exists delivery_status text not 
 alter table public.mama_codes add column if not exists sent_at bigint;
 alter table public.mama_codes add column if not exists expires_at bigint;
 alter table public.mama_codes add column if not exists password_cipher jsonb;
+alter table public.mama_codes add column if not exists deleted_at bigint;
 alter table public.mama_codes add column if not exists replacement_for text references public.mama_codes(id);
 alter table public.mama_codes add column if not exists version integer not null default 1;
 update public.mama_codes set business_code='HIS-'||upper(left(id,20)) where business_code is null;
@@ -83,13 +84,16 @@ begin
   select to_jsonb(x) into b from mama_batches x where id=p_target for update;if b is null then raise exception 'ADMIN_NOT_FOUND';end if;if (b->>'version')::int<>(p_data->>'expected')::int then raise exception 'ADMIN_CONFLICT';end if;
   update mama_batches set name=p_data->>'name',channel=p_data->>'channel',note=p_data->>'note',version=version+1 where id=p_target returning to_jsonb(mama_batches.*) into a;outcome=jsonb_build_object('ok',true);
  elsif p_action in ('reveal','export_start','export_finish') then outcome=jsonb_build_object('ok',true,'id',p_key);a=p_data-'password';
- elsif p_action in ('metadata','delivery','status','quota') then
+ elsif p_action in ('metadata','delivery','status','quota','archive','restore') then
   select * into c from mama_codes where id=p_target for update;if not found then raise exception 'ADMIN_NOT_FOUND';end if;
   if c.version<>(p_data->>'expected')::int then raise exception 'ADMIN_CONFLICT';end if;
+  if c.deleted_at is not null and p_action not in ('archive','restore') then raise exception 'ADMIN_CONFLICT';end if;
   b=to_jsonb(c)-'code_hash'-'password_cipher';
   if p_action='metadata' then
    update mama_codes set aliases=case when lower(business_code)<>lower(p_data->>'business_code') then array_append(aliases,business_code) else aliases end,business_code=p_data->>'business_code',batch_id=nullif(p_data->>'batch_id',''),channel=p_data->>'channel',note=p_data->>'note',order_ref=p_data->>'order_ref',expires_at=(p_data->>'expires_at')::bigint,version=version+1 where id=p_target;
   elsif p_action='delivery' then update mama_codes set delivery_status=p_data->>'delivery_status',sent_at=case when p_data->>'delivery_status'='sent' then coalesce((p_data->>'sent_at')::bigint,p_now) else null end,version=version+1 where id=p_target;
+  elsif p_action='archive' then update mama_codes set deleted_at=coalesce(deleted_at,p_now),active=false,version=version+1 where id=p_target;
+  elsif p_action='restore' then update mama_codes set deleted_at=null,active=false,version=version+1 where id=p_target;
   elsif p_action='status' then update mama_codes set active=(p_data->>'active')::boolean,version=version+1 where id=p_target;
   else delta=(p_data->>'delta')::int;if delta not between 1 and 20 then raise exception 'ADMIN_BAD_REQUEST';end if;
    insert into mama_quota_events(code_id,delta,reason,created,request_key) values(p_target,delta,p_data->>'reason',p_now,p_key);update mama_codes set quota=quota+delta,version=version+1 where id=p_target;
@@ -124,11 +128,11 @@ declare rows jsonb;total bigint;q text:=left(coalesce(p_filters->>'q',''),100);p
 begin
  if not exists(select 1 from mama_admin_sessions x join mama_admin_credentials cr on cr.id=1 and x.credential_version=cr.version where x.token_hash=p_actor and x.expires>p_now) then raise exception 'ADMIN_UNAUTHORIZED';end if;
  if p_entity='codes' then
-  with filtered as(select c.id,c.business_code,c.aliases,c.hint,c.label,c.batch_id,c.channel,c.note,c.order_ref,c.delivery_status,c.sent_at,c.expires_at,c.used,c.quota,c.active,c.created,c.version,c.replacement_for,c.password_cipher is not null as recoverable,(select max(s.created) from mama_submissions s where s.code_id=c.id) as last_test,(select count(*) from mama_submissions s where s.code_id=c.id and not s.valid) as void_count,b.name as batch_name from mama_codes c left join mama_batches b on c.batch_id=b.id
-   where (q='' or c.business_code ilike '%'||q||'%' or c.hint ilike '%'||q||'%' or c.order_ref ilike '%'||q||'%' or c.label ilike '%'||q||'%' or array_to_string(c.aliases,',') ilike '%'||q||'%' or c.code_hash=p_filters->>'password_hash')
+  with filtered as(select c.id,c.business_code,c.aliases,c.hint,c.label,c.batch_id,c.channel,c.note,c.order_ref,c.delivery_status,c.sent_at,c.expires_at,c.used,c.quota,c.active,c.deleted_at,c.created,c.version,c.replacement_for,c.password_cipher is not null as recoverable,(select max(s.created) from mama_submissions s where s.code_id=c.id) as last_test,(select count(*) from mama_submissions s where s.code_id=c.id and not s.valid) as void_count,b.name as batch_name from mama_codes c left join mama_batches b on c.batch_id=b.id
+   where ((p_filters->>'state'='deleted' and c.deleted_at is not null) or (coalesce(p_filters->>'state','')<>'deleted' and c.deleted_at is null)) and (q='' or c.business_code ilike '%'||q||'%' or c.hint ilike '%'||q||'%' or c.order_ref ilike '%'||q||'%' or c.label ilike '%'||q||'%' or array_to_string(c.aliases,',') ilike '%'||q||'%' or c.code_hash=p_filters->>'password_hash')
    and (coalesce(p_filters->>'batch','')='' or c.batch_id=p_filters->>'batch') and (coalesce(p_filters->>'channel','')='' or c.channel=p_filters->>'channel')
    and (coalesce(p_filters->>'delivery','')='' or c.delivery_status=p_filters->>'delivery') and (coalesce(p_filters->>'used','')='' or c.used=(p_filters->>'used')::int)
-   and (coalesce(p_filters->>'state','')='' or (p_filters->>'state'='active' and c.active and c.used<c.quota and (c.expires_at is null or c.expires_at>p_now)) or (p_filters->>'state'='disabled' and not c.active) or (p_filters->>'state'='exhausted' and c.used>=c.quota) or (p_filters->>'state'='expired' and c.expires_at<=p_now))
+   and (coalesce(p_filters->>'state','')='' or p_filters->>'state'='deleted' or (p_filters->>'state'='active' and c.active and c.used<c.quota and (c.expires_at is null or c.expires_at>p_now)) or (p_filters->>'state'='disabled' and not c.active) or (p_filters->>'state'='exhausted' and c.used>=c.quota) or (p_filters->>'state'='expired' and c.expires_at<=p_now))
    and (coalesce(p_filters->>'from','')='' or c.created>=(p_filters->>'from')::bigint) and (coalesce(p_filters->>'to','')='' or c.created<=(p_filters->>'to')::bigint))
   select (select count(*) from filtered),coalesce((select jsonb_agg(to_jsonb(x)) from(select * from filtered order by created desc,id desc limit lim offset (page-1)*lim)x),'[]') into total,rows;
  elsif p_entity='records' then
