@@ -42,6 +42,7 @@ jobs:
           node tests/admin3.integration.mjs
           node tests/admin3.test.mjs
           node tests/admin-safe-updates.test.mjs
+          node tests/admin-batch-pages.test.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

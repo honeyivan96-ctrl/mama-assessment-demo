@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';import fs from 'node:fs/promises';
+const source=await fs.readFile(new URL('../site/admin3.js',import.meta.url),'utf8');
+const body=source.slice(0,source.lastIndexOf('if(token){try{'));
+const element=()=>({append(){},remove(){},setAttribute(){},style:{}});
+const document={getElementById:()=>null,createElement:element,body:element()};
+const location={hostname:'example.com',hash:'#generate'};
+const window={addEventListener(){},scrollTo(){}};
+const sessionStorage={getItem:()=>null,setItem(){},removeItem(){}};
+const build=new (Object.getPrototypeOf(async function(){}).constructor)('document','location','window','sessionStorage',body+`
+const calls=[];token='test-session';shell=()=>({});message=()=>{};generator=()=>calls.push('generate');batchPage=async()=>calls.push('batches');listing=async()=>calls.push('detail:'+filters.codes.batch);overview=()=>calls.push('overview');
+await route();location.hash='#batches';await route();location.hash='#batch=batch-123';await route();
+let exported;const posts=[];const records=Array.from({length:205},(_,i)=>({id:'id-'+i}));
+api=async path=>{const u=new URL('https://example.com/'+path);const page=Number(u.searchParams.get('page'));if(u.searchParams.get('batch')!=='batch-123')throw Error('Batch filter lost');return {total:205,items:records.slice((page-1)*100,page*100)};};
+post=async(path,data)=>{posts.push({path,data});if(path==='admin/exports')return {id:'job'};if(path==='admin/codes/reveal')return {items:data.ids.map(id=>({password:'CS_1103_'+id}))};throw Error('Unexpected endpoint');};
+csv=(name,rows)=>{exported={name,rows};};await runExport('codes','codes','',{batch:'batch-123'});
+return {calls,exported,posts};`);
+const result=await build(document,location,window,sessionStorage);
+assert.deepEqual(result.calls,['generate','batches','detail:batch-123']);
+assert.deepEqual(result.exported.rows[0],['测评密码']);assert.equal(result.exported.rows.length,206);assert(result.exported.rows.every(row=>row.length===1));
+const chunks=result.posts.filter(p=>p.path==='admin/codes/reveal');assert.deepEqual(chunks.map(p=>p.data.ids.length),[100,100,5]);assert(chunks.every(p=>p.data.purpose==='export'&&!('password' in p.data)));
+console.log('PASS: three independent routes, batch-scoped export across pages, password-only CSV and no password re-entry.');
