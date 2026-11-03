@@ -36,6 +36,11 @@ jobs:
           node tests/fifteen.test.mjs
           node tests/refinement.test.mjs
           node tests/four-types-only.test.mjs
+      - name: Verify admin security and transactional workflows
+        run: |
+          npm ci --prefix tests/admin-runtime --ignore-scripts
+          node tests/admin3.integration.mjs
+          node tests/admin3.test.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
