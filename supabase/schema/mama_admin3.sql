@@ -75,8 +75,8 @@ begin
  elsif p_action='password' then
   select * into cred from mama_admin_credentials where id=1 for update;if cred.version<>(p_data->>'expected')::int then raise exception 'ADMIN_CONFLICT';end if;
   update mama_admin_credentials set verifier=p_data->'verifier',version=version+1,changed=p_now where id=1;
-  delete from mama_admin_sessions;outcome=jsonb_build_object('ok',true,'reauthenticate',true);a=jsonb_build_object('sessionsRevoked',true);
- elsif p_action='logout_all' then delete from mama_admin_sessions;outcome=jsonb_build_object('ok',true);a=outcome;
+  delete from mama_admin_sessions where token_hash is not null;outcome=jsonb_build_object('ok',true,'reauthenticate',true);a=jsonb_build_object('sessionsRevoked',true);
+ elsif p_action='logout_all' then delete from mama_admin_sessions where token_hash is not null;outcome=jsonb_build_object('ok',true);a=outcome;
  elsif p_action='batch_create' then
   insert into mama_batches(id,name,channel,note,created) values(p_target,p_data->>'name',coalesce(p_data->>'channel',''),coalesce(p_data->>'note',''),p_now);outcome=jsonb_build_object('id',p_target);a=p_data-'password';
  elsif p_action='batch_edit' then
