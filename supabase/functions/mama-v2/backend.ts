@@ -41,7 +41,7 @@ export function makeHandler(env:Environment,store:Store=createStore(env),now=()=
    if(req.method==="GET"&&path==="config")return json({version:QUESTION_VERSION,quota:3});
    const extended=await adminOps(req,path);if(extended)return json(extended.data,extended.status||200);
    if(req.method==="POST"&&path==="auth"){
-    await rate(req,"buyer-auth",20);const input=await readBody(req);if(typeof input.password!=="string")throw new HttpError("请输入测评密码。");const password=input.password.trim().replace(/[\s-]/g,"").toUpperCase();if(password.length<8||password.length>64)throw new HttpError("密码无效，请检查后重试。");
+    await rate(req,"buyer-auth",20);const input=await readBody(req);if(typeof input.password!=="string")throw new HttpError("请输入测评密码。");const password=input.password.trim().replace(/[\s-]/g,"").toUpperCase();if(password.length<7||password.length>64)throw new HttpError("密码无效，请检查后重试。");
     const c=await first("mama_codes",{select:"id,used,quota,active,expires_at",code_hash:"eq."+await keyedHash(env.APP_SECRET,password)});if(!c||!c.active||(c.expires_at&&c.expires_at<=now()))throw new HttpError("密码无效或已停用，请检查后重试。");if(c.used>=c.quota)throw new HttpError("这个密码的测评次数已用完，请联系店铺客服。");
     const token=randomToken();await store.query("mama_sessions",{},"POST",{token_hash:await digest(token),code_id:c.id,expires:now()+604800000});return json({token,remaining:c.quota-c.used,version:QUESTION_VERSION});
    }
