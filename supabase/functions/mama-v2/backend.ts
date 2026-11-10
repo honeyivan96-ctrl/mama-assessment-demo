@@ -1,3 +1,4 @@
+import {makeVisitorOperations} from "./visitor-ops.mjs";
 import {makeAdminOperations} from "./admin-ops.mjs";
 import {QUESTION_BANK,QUESTION_VERSION,buildSubmission,typeName,refreshStoredReport} from "./domain.mjs";
 const publicQuestions=()=>QUESTION_BANK;
@@ -8,7 +9,7 @@ export function createStore(env:Environment):Store{
  const request=async(path:string,method:string,value?:unknown,prefer?:string)=>{
   const res=await fetch(env.SUPABASE_URL+"/rest/v1/"+path,{method,headers:{apikey:env.SUPABASE_SERVICE_ROLE_KEY,Authorization:"Bearer "+env.SUPABASE_SERVICE_ROLE_KEY,"Content-Type":"application/json",...(prefer?{Prefer:prefer}:{})},body:value===undefined?undefined:JSON.stringify(value)});
   const raw=await res.text();let data:any;try{data=raw?JSON.parse(raw):[];}catch{throw new HttpError("数据库暂时不可用，请稍后重试。",503);}
-  if(!res.ok){const message=String(data.message||"");if(message.includes("ADMIN_"))throw new HttpError(message,409);if(message.includes("MAMA_QUOTA_EXHAUSTED"))throw new HttpError("这个密码的测评次数已用完，本次未扣次数。",409);if(message.includes("MAMA_CODE_DISABLED"))throw new HttpError("密码已停用，请联系店铺客服。",401);if(message.includes("MAMA_SESSION_EXPIRED"))throw new HttpError("验证已过期，请重新输入密码。",401);if(message.includes("MAMA_ATTEMPT_EXPIRED"))throw new HttpError("本次答题已超过24小时，请重新开始。未扣次数。");if(message.includes("MAMA_ATTEMPT_INVALID"))throw new HttpError("答题记录无效，请重新开始。");throw new HttpError("数据库暂时不可用，请稍后重试。",503);}
+  if(!res.ok){const message=String(data.message||"");if(message.includes("MAMA_SHARED_CHANGED"))throw new HttpError(message,409);if(message.includes("ADMIN_"))throw new HttpError(message,409);if(message.includes("MAMA_QUOTA_EXHAUSTED"))throw new HttpError("这个密码的测评次数已用完，本次未扣次数。",409);if(message.includes("MAMA_CODE_DISABLED"))throw new HttpError("密码已停用，请联系店铺客服。",401);if(message.includes("MAMA_SESSION_EXPIRED"))throw new HttpError("验证已过期，请重新输入密码。",401);if(message.includes("MAMA_ATTEMPT_EXPIRED"))throw new HttpError("本次答题已超过24小时，请重新开始。未扣次数。");if(message.includes("MAMA_ATTEMPT_INVALID"))throw new HttpError("答题记录无效，请重新开始。");throw new HttpError("数据库暂时不可用，请稍后重试。",503);}
   return {data,total:Number(res.headers.get("content-range")?.split("/")[1])||0};
  };
  return {async query(table,params,method="GET",value,prefer){const r=await request(table+"?"+new URLSearchParams(params),method,value,prefer);return {rows:Array.isArray(r.data)?r.data:[],total:r.total};},async rpc(name,value){return (await request("rpc/"+name,"POST",value)).data;}};
@@ -19,6 +20,7 @@ export async function keyedHash(secret:string,value:string){const key=await cryp
 export async function secureEqual(a:string,b:string){const x=await digest(a),y=await digest(b);let difference=0;for(let i=0;i<x.length;i++)difference|=x.charCodeAt(i)^y.charCodeAt(i);return difference===0;}
 export async function readBody(req:Request){if(!req.headers.get("content-type")?.startsWith("application/json"))throw new HttpError("请求格式错误。",415);if(Number(req.headers.get("content-length")||0)>16384)throw new HttpError("请求过大。",413);if(!req.body)throw new HttpError("请求内容为空。");const reader=req.body.getReader();const chunks:Uint8Array[]=[];let length=0;while(true){const {done,value}=await reader.read();if(done)break;length+=value.length;if(length>16384){await reader.cancel();throw new HttpError("请求过大。",413);}chunks.push(value);}const all=new Uint8Array(length);let offset=0;for(const chunk of chunks){all.set(chunk,offset);offset+=chunk.length;}try{const data=JSON.parse(new TextDecoder().decode(all));if(!data||typeof data!=="object"||Array.isArray(data))throw new Error();return data;}catch{throw new HttpError("请求格式错误。");}}
 export function makeHandler(env:Environment,store:Store=createStore(env),now=()=>Date.now()){
+ const visitorOps=makeVisitorOperations(env,store,{HttpError,randomToken,digest,keyedHash,secureEqual,readBody},now);
  const adminOps=makeAdminOperations(env,store,{HttpError,randomToken,digest,keyedHash,secureEqual,readBody},now);
  const origins=(env.ALLOWED_ORIGINS+",https://honeyivan96-ctrl.github.io").split(",").map(v=>v.trim()).filter(Boolean);
  const first=async(table:string,params:Record<string,string>)=>(await store.query(table,{...params,limit:"1"})).rows[0];
@@ -39,6 +41,7 @@ export function makeHandler(env:Environment,store:Store=createStore(env),now=()=
    if(env.APP_SECRET.length<32||env.ADMIN_PASSWORD.length<16)throw new HttpError("服务尚未完成安全配置。",503);
    const url=new URL(req.url),marker="/mama-v2/",index=url.pathname.indexOf(marker);if(index<0)throw new HttpError("接口不存在。",404);const path=url.pathname.slice(index+marker.length);
    if(req.method==="GET"&&path==="config")return json({version:QUESTION_VERSION,quota:3});
+   const visitorResult=await visitorOps(req,path);if(visitorResult)return json(visitorResult.data,visitorResult.status||200);
    const extended=await adminOps(req,path);if(extended)return json(extended.data,extended.status||200);
    if(req.method==="POST"&&path==="auth"){
     await rate(req,"buyer-auth",20);const input=await readBody(req);if(typeof input.password!=="string")throw new HttpError("请输入测评密码。");const password=input.password.trim().replace(/[\s-]/g,"").toUpperCase();if(password.length<7||password.length>64)throw new HttpError("密码无效，请检查后重试。");

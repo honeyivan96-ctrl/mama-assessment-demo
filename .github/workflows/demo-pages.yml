@@ -40,6 +40,7 @@ jobs:
         run: |
           npm ci --prefix tests/admin-runtime --ignore-scripts
           node tests/admin3.integration.mjs
+          node tests/browser-identity.test.mjs
           node tests/admin3.test.mjs
           node tests/admin-safe-updates.test.mjs
           node tests/admin-batch-pages.test.mjs

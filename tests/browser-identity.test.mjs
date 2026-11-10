@@ -1,0 +1,4 @@
+import assert from 'node:assert/strict';import fs from 'node:fs/promises';
+const html=await fs.readFile(new URL('../site/index.html',import.meta.url),'utf8'),match=html.match(/function browserCredential\(\)\{[\s\S]*?\nlet buyerToken/);assert(match);const fn=match[0].replace(/\nlet buyerToken$/,'')+';return browserCredential();';const run=new Function('localStorage','crypto',fn);
+const makeStore=()=>{const map=new Map();return {getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v)};};const store=makeStore(),a=run(store,crypto),again=run(store,crypto),other=run(makeStore(),crypto);assert.match(a,/^[a-f0-9]{48}$/);assert.equal(a,again);assert.notEqual(a,other);assert.throws(()=>run({getItem(){throw Error('blocked');}},crypto),/无法保存测评编号/);
+console.log('PASS: persistent browser credential, independent browsers and explicit blocked-storage error.');
