@@ -1,3 +1,4 @@
+import {makeImageDownload} from "./image-download.mjs";
 import {makeVisitorOperations} from "./visitor-ops.mjs";
 import {makeAdminOperations} from "./admin-ops.mjs";
 import {QUESTION_BANK,QUESTION_VERSION,buildSubmission,typeName,refreshStoredReport} from "./domain.mjs";
@@ -29,6 +30,7 @@ export function makeHandler(env:Environment,store:Store=createStore(env),now=()=
  const buyer=async(req:Request)=>{const hash=await digest(headerToken(req,"x-mama-session"));const s=await first("mama_sessions",{select:"token_hash,code_id",token_hash:"eq."+hash,expires:"gt."+now()});if(!s)throw new HttpError("验证已过期，请重新输入测评密码。",401);const c=await first("mama_codes",{select:"id,used,quota,active,expires_at",id:"eq."+s.code_id});if(!c||!c.active||(c.expires_at&&c.expires_at<=now()))throw new HttpError("密码已失效或停用，请联系店铺客服。",401);return {hash,...c};};
  const admin=async(req:Request)=>{const hash=await digest(headerToken(req,"x-mama-admin"));if(!await first("mama_admin_sessions",{select:"token_hash",token_hash:"eq."+hash,expires:"gt."+now()}))throw new HttpError("管理登录已过期。",401);return hash;};
  const rate=async(req:Request,area:string,max:number)=>{const time=now(),ip=req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()||req.headers.get("cf-connecting-ip")||"unknown";const key=await keyedHash(env.APP_SECRET,`${area}:${ip}:${Math.floor(time/600000)}`);const count=await store.rpc("mama_rate",{p_key:key,p_now:time,p_expires:time+600000});if(count>max)throw new HttpError("操作太频繁，请十分钟后再试。",429);};
+ const imageDownload=makeImageDownload(env,store,{HttpError,keyedHash,rate},now);
  return async(req:Request):Promise<Response>=>{
   const origin=req.headers.get("origin");const allowed=origin!==null&&origins.includes(origin);
   const headers:Record<string,string>={"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store","X-Content-Type-Options":"nosniff","Vary":"Origin",...(allowed?{"Access-Control-Allow-Origin":origin!}:{}),"Access-Control-Allow-Headers":"content-type,apikey,x-mama-session,x-mama-admin","Access-Control-Allow-Methods":"GET, POST, OPTIONS","Access-Control-Max-Age":"600"};
@@ -41,6 +43,7 @@ export function makeHandler(env:Environment,store:Store=createStore(env),now=()=
    if(env.APP_SECRET.length<32||env.ADMIN_PASSWORD.length<16)throw new HttpError("服务尚未完成安全配置。",503);
    const url=new URL(req.url),marker="/mama-v2/",index=url.pathname.indexOf(marker);if(index<0)throw new HttpError("接口不存在。",404);const path=url.pathname.slice(index+marker.length);
    if(req.method==="GET"&&path==="config")return json({version:QUESTION_VERSION,quota:3});
+   const imageResponse=await imageDownload(req,path);if(imageResponse)return json(imageResponse.data);
    const visitorResult=await visitorOps(req,path);if(visitorResult)return json(visitorResult.data,visitorResult.status||200);
    const extended=await adminOps(req,path);if(extended)return json(extended.data,extended.status||200);
    if(req.method==="POST"&&path==="auth"){
