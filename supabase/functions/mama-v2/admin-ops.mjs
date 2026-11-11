@@ -14,7 +14,7 @@ export function makeAdminOperations(env,store,utils,now=()=>Date.now()){
  const rate=async(req,area,max)=>{const t=now(),ip=req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||req.headers.get('cf-connecting-ip')||'unknown';const key=await keyedHash(env.APP_SECRET,`${area}:${ip}:${Math.floor(t/600000)}`);const n=await store.rpc('mama_rate',{p_key:key,p_now:t,p_expires:t+600000});if(n>max)fail('操作频繁，请十分钟后重试。',429);};
  const rpc=async(name,data)=>{try{return await store.rpc(name,data);}catch(e){const m=String(e.message);if(m.includes('ADMIN_UNAUTHORIZED'))fail('管理登录已过期。',401);if(m.includes('ADMIN_CONFLICT'))fail('记录已发生变化，请刷新后重新操作。',409);if(m.includes('ADMIN_DUPLICATE'))fail('编码已存在，请更换编码或前缀。',409);if(m.includes('ADMIN_NOT_FOUND'))fail('记录不存在。',404);if(m.includes('ADMIN_ALREADY_VOID'))fail('这份答卷已经作废，不能再次返还次数。',409);if(m.includes('ADMIN_BAD_REQUEST'))fail('操作参数无效。');throw e;}};
  const mutate=async(actor,action,target,data,key,intent)=>rpc('mama_admin_mutate',{p_actor:actor,p_action:action,p_target:target,p_data:data,p_key:key,p_now:now(),p_intent:await digest(JSON.stringify(intent))});
- const safeCode=c=>{if(!c)return null;const{code_hash,password_cipher,...rest}=c;return {...rest,recoverable:!!password_cipher,remaining:c.quota-c.used};};
+ const safeCode=c=>{if(!c)return null;const{code_hash,password_cipher,...rest}=c;return {...rest,recoverable:!!password_cipher,remaining:c.unlimited?null:c.quota-c.used};};
  const id=v=>{if(typeof v!=='string'||!/^[a-f0-9]{48}$/.test(v))fail('记录编号无效。');return v;};
  const expected=v=>{if(!Number.isInteger(v)||v<1)fail('请刷新记录后再操作。');return v;};
  const reason=v=>{const s=text(v,300);if(!s)fail('请填写操作原因。');return s;};

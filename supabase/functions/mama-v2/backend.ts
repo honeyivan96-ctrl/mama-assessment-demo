@@ -1,6 +1,6 @@
 import {makeImageDownload} from "./image-download.mjs";
 import {makeVisitorOperations} from "./visitor-ops.mjs";
-import {makeAdminOperations} from "./admin-ops.mjs";
+import {makeAdminOperations,sealPassword} from "./admin-ops.mjs";
 import {QUESTION_BANK,QUESTION_VERSION,buildSubmission,typeName,refreshStoredReport} from "./domain.mjs";
 const publicQuestions=()=>QUESTION_BANK;
 export type Environment={SUPABASE_URL:string;SUPABASE_SERVICE_ROLE_KEY:string;APP_SECRET:string;ADMIN_PASSWORD:string;ALLOWED_ORIGINS:string};
@@ -27,7 +27,7 @@ export function makeHandler(env:Environment,store:Store=createStore(env),now=()=
  const first=async(table:string,params:Record<string,string>)=>(await store.query(table,{...params,limit:"1"})).rows[0];
  const settings=async()=>{const rows=(await store.query("mama_settings",{select:"key,value"})).rows;const values=Object.fromEntries(rows.map(r=>[r.key,r.value]));return {shop:values.shop||"妈妈成长小站",contact:values.contact||"请通过购买测评的店铺联系客服",reward:"感谢你的支持！在店铺好评后，联系客服发送好评截图，即可获得1元返现。"};};
  const headerToken=(req:Request,header:string)=>{const t=req.headers.get(header)||"";if(!/^[a-f0-9]{48}$/.test(t))throw new HttpError(header==="x-mama-admin"?"请先登录管理后台。":"请先输入测评密码。",401);return t;};
- const buyer=async(req:Request)=>{const hash=await digest(headerToken(req,"x-mama-session"));const s=await first("mama_sessions",{select:"token_hash,code_id",token_hash:"eq."+hash,expires:"gt."+now()});if(!s)throw new HttpError("验证已过期，请重新输入测评密码。",401);const c=await first("mama_codes",{select:"id,used,quota,active,expires_at",id:"eq."+s.code_id});if(!c||!c.active||(c.expires_at&&c.expires_at<=now()))throw new HttpError("密码已失效或停用，请联系店铺客服。",401);return {hash,...c};};
+ const buyer=async(req:Request)=>{const hash=await digest(headerToken(req,"x-mama-session"));const s=await first("mama_sessions",{select:"token_hash,code_id",token_hash:"eq."+hash,expires:"gt."+now()});if(!s)throw new HttpError("验证已过期，请重新输入测评密码。",401);const c=await first("mama_codes",{select:"id,used,quota,active,expires_at,unlimited",id:"eq."+s.code_id});if(!c||!c.active||(c.expires_at&&c.expires_at<=now()))throw new HttpError("密码已失效或停用，请联系店铺客服。",401);return {hash,...c};};
  const admin=async(req:Request)=>{const hash=await digest(headerToken(req,"x-mama-admin"));if(!await first("mama_admin_sessions",{select:"token_hash",token_hash:"eq."+hash,expires:"gt."+now()}))throw new HttpError("管理登录已过期。",401);return hash;};
  const rate=async(req:Request,area:string,max:number)=>{const time=now(),ip=req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()||req.headers.get("cf-connecting-ip")||"unknown";const key=await keyedHash(env.APP_SECRET,`${area}:${ip}:${Math.floor(time/600000)}`);const count=await store.rpc("mama_rate",{p_key:key,p_now:time,p_expires:time+600000});if(count>max)throw new HttpError("操作太频繁，请十分钟后再试。",429);};
  const imageDownload=makeImageDownload(env,store,{HttpError,keyedHash,rate},now);
@@ -48,12 +48,12 @@ export function makeHandler(env:Environment,store:Store=createStore(env),now=()=
    const extended=await adminOps(req,path);if(extended)return json(extended.data,extended.status||200);
    if(req.method==="POST"&&path==="auth"){
     await rate(req,"buyer-auth",20);const input=await readBody(req);if(typeof input.password!=="string")throw new HttpError("请输入测评密码。");const password=input.password.trim().replace(/[\s-]/g,"").toUpperCase();if(password.length<7||password.length>64)throw new HttpError("密码无效，请检查后重试。");
-    const c=await first("mama_codes",{select:"id,used,quota,active,expires_at",code_hash:"eq."+await keyedHash(env.APP_SECRET,password)});if(!c||!c.active||(c.expires_at&&c.expires_at<=now()))throw new HttpError("密码无效或已停用，请检查后重试。");if(c.used>=c.quota)throw new HttpError("这个密码的测评次数已用完，请联系店铺客服。");
-    const token=randomToken();await store.query("mama_sessions",{},"POST",{token_hash:await digest(token),code_id:c.id,expires:now()+604800000});return json({token,remaining:c.quota-c.used,version:QUESTION_VERSION});
+    let c=await first("mama_codes",{select:"id,used,quota,active,expires_at,unlimited,password_cipher",code_hash:"eq."+await keyedHash(env.APP_SECRET,password)});if(!c)c=await first("mama_codes",{select:"id,used,quota,active,expires_at,unlimited,password_cipher",code_hash:"eq."+await digest("mama-test:"+password),unlimited:"eq.true"});if(!c||!c.active||(c.expires_at&&c.expires_at<=now()))throw new HttpError("密码无效或已停用，请检查后重试。");if(!c.unlimited&&c.used>=c.quota)throw new HttpError("这个密码的测评次数已用完，请联系店铺客服。");
+    if(c.unlimited&&!c.password_cipher)await store.query("mama_codes",{id:"eq."+c.id},"PATCH",{password_cipher:await sealPassword(env.APP_SECRET,c.id,password)});const token=randomToken();await store.query("mama_sessions",{},"POST",{token_hash:await digest(token),code_id:c.id,expires:now()+604800000});return json({token,remaining:c.unlimited?null:c.quota-c.used,unlimited:!!c.unlimited,version:QUESTION_VERSION});
    }
-   if(req.method==="GET"&&path==="session"){const s=await buyer(req);return json({remaining:s.quota-s.used,version:QUESTION_VERSION,questions:publicQuestions()});}
+   if(req.method==="GET"&&path==="session"){const s=await buyer(req);return json({remaining:s.unlimited?null:s.quota-s.used,unlimited:!!s.unlimited,version:QUESTION_VERSION,questions:publicQuestions()});}
    if(req.method==="POST"&&path==="start"){
-    const s=await buyer(req);if(s.used>=s.quota)throw new HttpError("测评次数已用完，请联系店铺客服。");await rate(req,"start",60);const token=randomToken();await store.query("mama_attempts",{},"POST",{token_hash:await digest(token),session_hash:s.hash,code_id:s.id,expires:now()+86400000});return json({attempt:token,remaining:s.quota-s.used});
+    const s=await buyer(req);if(!s.unlimited&&s.used>=s.quota)throw new HttpError("测评次数已用完，请联系店铺客服。");await rate(req,"start",60);const token=randomToken();await store.query("mama_attempts",{},"POST",{token_hash:await digest(token),session_hash:s.hash,code_id:s.id,expires:now()+86400000});return json({attempt:token,remaining:s.unlimited?null:s.quota-s.used,unlimited:!!s.unlimited});
    }
    if(req.method==="POST"&&path==="complete"){
     const s=await buyer(req);const input=await readBody(req);if(typeof input.attempt!=="string"||!/^[a-f0-9]{48}$/.test(input.attempt)||!Array.isArray(input.answers))throw new HttpError("答题记录无效，请重新开始。");let submission;try{submission=buildSubmission(input,now());}catch(e){throw new HttpError((e as Error).message);}
