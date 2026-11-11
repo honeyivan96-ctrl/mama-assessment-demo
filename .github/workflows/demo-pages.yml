@@ -26,12 +26,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Check personalized reports and image saving
+      - name: Check reports, sharing and retired downloads
         run: |
           node tests/report-upgrade.test.mjs
-          node tests/report-save.test.mjs
-          node tests/https-image-download.test.mjs
-          node tests/android-save.test.mjs
+          node tests/no-download.test.mjs
+          node tests/front-flow.test.mjs
           node tests/mother-art.test.mjs
           node tests/clear-report.test.mjs
           node tests/share-copy.test.mjs
